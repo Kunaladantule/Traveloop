@@ -3,20 +3,24 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { format, differenceInDays } from 'date-fns'
-import { MapPin, Calendar, Wallet, Clock, Plus } from 'lucide-react'
+import {
+  Edit2,
+  CheckCircle2,
+  Bus,
+  Ship,
+  Plane,
+  Bike,
+  Bed,
+  UserCircle2
+} from 'lucide-react'
 
 import { supabase } from '@/lib/supabase'
-import { getUserTrips } from '@/app/actions/trip'
-import { getTripDetails } from '@/app/actions/itinerary'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BudgetOverview } from '@/components/budget/BudgetOverview'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export default function DashboardOverviewPage() {
   const [user, setUser] = useState<any>(null)
-  const [activeTrip, setActiveTrip] = useState<any>(null)
-  const [tripDetails, setTripDetails] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -28,23 +32,6 @@ export default function DashboardOverviewPage() {
         return
       }
       setUser(session.user)
-
-      // Fetch user trips
-      const res = await getUserTrips(session.user.id)
-      if (res.success && res.trips && res.trips.length > 0) {
-        // Find the closest upcoming trip
-        const sortedTrips = res.trips.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
-        const upcoming = sortedTrips.find((t: any) => new Date(t.startDate) >= new Date()) || sortedTrips[sortedTrips.length - 1]
-        
-        setActiveTrip(upcoming)
-
-        // Fetch details for the upcoming trip
-        const detailsRes = await getTripDetails(upcoming.id)
-        if (detailsRes.success) {
-          setTripDetails(detailsRes.trip)
-        }
-      }
-      
       setLoading(false)
     }
 
@@ -55,117 +42,124 @@ export default function DashboardOverviewPage() {
     return <div className="flex h-[50vh] items-center justify-center">Loading dashboard...</div>
   }
 
-  if (!activeTrip) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 p-12 text-center shadow-sm">
-        <MapPin className="h-12 w-12 text-zinc-400 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Welcome to Traveloop!</h2>
-        <p className="text-zinc-500 mb-6 max-w-md">You don&apos;t have any trips planned yet. Start your journey by creating a new trip.</p>
-        <Link href="/dashboard/trips">
-          <Button>Create your first trip</Button>
-        </Link>
-      </div>
-    )
-  }
-
-  const daysRemaining = differenceInDays(new Date(activeTrip.startDate), new Date())
-  const statusText = daysRemaining > 0 ? `${daysRemaining} Days Remaining` : daysRemaining === 0 ? 'Starts Today!' : 'Trip Completed'
-  
-  // Find first stop with activities or just the first stop
-  const firstStop = tripDetails?.stops?.[0]
-  const activities = firstStop?.activities || []
+  // Extract user info
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'kunal'
+  const userEmail = user?.email || 'kunaldantule@gmail.com'
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 dark:text-zinc-50">Dashboard</h1>
-        <p className="text-zinc-500 dark:text-zinc-400">Here&apos;s an overview of your upcoming adventure.</p>
+    <div className="relative max-w-5xl mx-auto space-y-12 py-10 px-4 min-h-screen">
+      {/* Decorative Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-200/40 blur-3xl" />
+        <div className="absolute top-[20%] right-[-5%] w-[30%] h-[30%] rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="absolute top-[40%] left-[20%] w-[50%] h-[30%] rounded-full bg-purple-200/40 blur-3xl" />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Active Trip Widget */}
-        <Card className="flex flex-col border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-indigo-500" /> Active Trip
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-center items-center text-center p-6 bg-zinc-50/50 dark:bg-zinc-900/20 m-6 mt-0 rounded-xl border border-zinc-100 dark:border-zinc-800">
-            <h3 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">{activeTrip.title}</h3>
-            <div className="flex items-center gap-4 text-zinc-500 mb-6">
-              <span className="flex items-center"><Calendar className="mr-1 h-4 w-4" /> {format(new Date(activeTrip.startDate), 'MMM d, yyyy')}</span>
-            </div>
-            <div className="inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors border-transparent bg-indigo-100 text-indigo-900 dark:bg-indigo-900/50 dark:text-indigo-200">
-              {statusText}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Profile Card */}
+      <Card className="shadow-2xl border-white/10 bg-[#0F172A]/90 backdrop-blur-2xl overflow-visible mt-8 text-white rounded-3xl">
+        <CardContent className="p-10 flex flex-col md:flex-row gap-12 relative">
 
-        {/* Budget Summary Widget */}
-        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-emerald-500" /> Budget Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Reuse BudgetOverview component - we pass tripId */}
-            <div className="h-[250px] overflow-hidden">
-               <BudgetOverview tripId={activeTrip.id} />
+          {/* Left Column - Avatar */}
+          <div className="flex flex-col items-center flex-shrink-0 md:w-1/3">
+            <div className="relative group cursor-pointer mb-4">
+              <div className="h-32 w-32 rounded-full bg-white/10 flex items-center justify-center text-indigo-300 overflow-hidden border border-white/20 shadow-sm backdrop-blur-md">
+                <UserCircle2 className="h-28 w-28 text-white/50" />
+              </div>
+              {/* Edit Icon Badge */}
+              <div className="absolute bottom-0 right-0 bg-white text-black text-[10px] flex items-center gap-1 px-2 py-1 rounded-md border-2 border-[#0F172A] cursor-pointer hover:bg-gray-200 transition-colors shadow-lg">
+                <Edit2 className="h-3 w-3" /> Edit
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Itinerary Timeline Widget */}
-      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4 mb-4">
-          <div>
-            <CardTitle className="text-lg">Itinerary Builder</CardTitle>
-            <CardDescription>
-              {firstStop ? `Day 1: ${firstStop.cityName}` : 'No stops added yet'}
-            </CardDescription>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-bold text-white">{userName}</h2>
+              <button className="text-slate-400 hover:text-white transition-colors">
+                <Edit2 className="h-4 w-4" />
+              </button>
+            </div>
+
+            <button className="text-sm text-indigo-400 hover:underline hover:text-indigo-300 transition-colors">
+              Add your country
+            </button>
           </div>
-          <Link href={`/trips/${activeTrip.id}`}>
-            <Button variant="outline" size="sm" className="gap-1">
-              <Plus className="h-4 w-4" /> View Full Trip
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {activities.length > 0 ? (
-            <div className="relative border-l border-zinc-200 dark:border-zinc-800 ml-3 pl-6 space-y-8 py-4">
-              {activities.map((activity: any) => (
-                <div key={activity.id} className="relative">
-                  <span className="absolute -left-[35px] top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 ring-4 ring-white dark:ring-zinc-950">
-                    <Clock className="h-3 w-3 text-zinc-400" />
-                  </span>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                    <div>
-                      <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{activity.title}</h4>
-                      {activity.notes && <p className="text-sm text-zinc-500 mt-1">{activity.notes}</p>}
-                      {activity.cost && activity.cost > 0 ? (
-                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mt-2">
-                          Costs: ${activity.cost}
-                        </p>
-                      ) : null}
-                    </div>
-                    {activity.category && (
-                      <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold border-transparent bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50">
-                        {activity.category}
-                      </span>
-                    )}
-                  </div>
+
+          {/* Right Column - Details */}
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white mb-8">Your Profile</h2>
+
+            <div className="space-y-6">
+              {/* Contact Number */}
+              <div>
+                <p className="text-sm font-semibold text-zinc-300 mb-2">Contact Number</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-zinc-400">+919584668971</span>
+                  <button className="text-zinc-400 hover:text-white transition-colors">
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
                 </div>
-              ))}
+              </div>
+
+              {/* WhatsApp Checkbox */}
+              <div className="flex items-center gap-2 pt-2">
+                <Checkbox id="whatsapp" defaultChecked className="rounded-sm border-white/20 data-[state=checked]:bg-white data-[state=checked]:text-[#0F172A] h-4 w-4" />
+                <label htmlFor="whatsapp" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-300">
+                  Receive booking updates on WhatsApp?
+                </label>
+              </div>
+
+              {/* Email */}
+              <div className="pt-2">
+                <p className="text-sm font-semibold text-zinc-300 mb-2">Email</p>
+                <div className="flex items-center gap-4">
+                  <span className="text-zinc-400">{userEmail}</span>
+                  <button className="text-zinc-400 hover:text-white transition-colors">
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <Button variant="destructive" size="sm" className="bg-red-500 hover:bg-red-600 text-white text-xs h-7 px-3 rounded-md border-0">
+                    Verify Now
+                  </Button>
+                </div>
+              </div>
             </div>
-          ) : (
-             <div className="text-center py-12 text-zinc-500">
-               <p>No activities scheduled for this stop yet.</p>
-             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* My Trips Section */}
+      <div className="pt-8 relative min-h-[400px]">
+        <h2 className="text-2xl font-bold text-[#0F172A] mb-8">My Trips</h2>
+        <p className="text-slate-500 mb-16">
+          You don&apos;t have any plans yet. <Link href="/dashboard/trips" className="text-[#0F172A] hover:underline">Start Planning</Link>
+        </p>
+
+        {/* Decorative Illustration */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md flex justify-center mt-12 pb-12">
+          {/* Circular abstract background elements */}
+          <div className="absolute bottom-0 w-64 h-64 rounded-full border border-dashed border-yellow-300 opacity-50 z-0" />
+          <div className="absolute bottom-10 -left-10 w-48 h-48 rounded-full border border-dashed border-yellow-300 opacity-50 z-0" />
+          <div className="absolute bottom-20 left-10 w-32 h-32 rounded-full bg-yellow-100 opacity-80 z-0" />
+
+          {/* Icons Row */}
+          <div className="flex items-center gap-4 z-10 mt-20 relative">
+            <div className="h-14 w-14 rounded-full bg-[#3f3f5a] flex items-center justify-center text-white shadow-md">
+              <Bus className="h-6 w-6" />
+            </div>
+            <div className="h-14 w-14 rounded-full bg-[#3f3f5a] flex items-center justify-center text-white shadow-md">
+              <Ship className="h-6 w-6" />
+            </div>
+            <div className="h-14 w-14 rounded-full bg-[#3f3f5a] flex items-center justify-center text-white shadow-md">
+              <Plane className="h-6 w-6" />
+            </div>
+            <div className="h-14 w-14 rounded-full bg-[#3f3f5a] flex items-center justify-center text-white shadow-md">
+              <Bike className="h-6 w-6" />
+            </div>
+            <div className="h-14 w-14 rounded-full bg-[#3f3f5a] flex items-center justify-center text-white shadow-md">
+              <Bed className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

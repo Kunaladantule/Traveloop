@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarIcon, Map, Wallet } from 'lucide-react'
+import { ArrowLeft, CalendarIcon, Map, Wallet, Briefcase, StickyNote } from 'lucide-react'
 
 import { supabase } from '@/lib/supabase'
 import { getTripDetails } from '@/app/actions/itinerary'
@@ -13,6 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddStopModal } from '@/components/itinerary/AddStopModal'
 import { StopList } from '@/components/itinerary/StopList'
 import { BudgetOverview } from '@/components/budget/BudgetOverview'
+import { PackingList } from '@/components/packing/PackingList'
+import { NotesBoard } from '@/components/notes/NotesBoard'
+import { ShareTripModal } from '@/components/itinerary/ShareTripModal'
 
 export default function TripItineraryPage() {
   const [user, setUser] = useState<any>(null)
@@ -70,11 +73,14 @@ export default function TripItineraryPage() {
       >
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 p-8 flex flex-col justify-between max-w-5xl mx-auto">
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="bg-white/10 text-white hover:bg-white/20 border-white/20">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-            </Button>
-          </Link>
+          <div className="flex justify-between items-start">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" className="bg-white/10 text-white hover:bg-white/20 border-white/20">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+              </Button>
+            </Link>
+            <ShareTripModal tripId={trip.id} initialIsPublic={trip.isPublic} initialShareSlug={trip.shareSlug} />
+          </div>
           <div className="text-white space-y-2">
             <h1 className="text-4xl font-bold tracking-tight shadow-sm">{trip.title}</h1>
             <div className="flex items-center gap-4 text-sm font-medium opacity-90">
@@ -87,9 +93,11 @@ export default function TripItineraryPage() {
 
       <div className="mx-auto max-w-5xl p-8">
         <Tabs defaultValue="itinerary" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-[400px] mb-8">
-            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-            <TabsTrigger value="budget">Budget Tracker</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 max-w-[800px] mb-8 h-auto p-1">
+            <TabsTrigger value="itinerary" className="py-2">Itinerary</TabsTrigger>
+            <TabsTrigger value="budget" className="py-2">Budget Tracker</TabsTrigger>
+            <TabsTrigger value="packing" className="py-2">Packing List</TabsTrigger>
+            <TabsTrigger value="notes" className="py-2">Notes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="itinerary" className="mt-0">
@@ -119,6 +127,32 @@ export default function TripItineraryPage() {
             </div>
             
             <BudgetOverview tripId={tripId} />
+          </TabsContent>
+
+          <TabsContent value="packing" className="mt-0">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <Briefcase className="h-6 w-6 text-indigo-500" /> Packing List
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">
+                Keep track of everything you need to bring.
+              </p>
+            </div>
+            
+            <PackingList tripId={tripId} />
+          </TabsContent>
+
+          <TabsContent value="notes" className="mt-0">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <StickyNote className="h-6 w-6 text-indigo-500" /> Trip Notes
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">
+                Save important details, ideas, and reminders.
+              </p>
+            </div>
+            
+            <NotesBoard tripId={tripId} />
           </TabsContent>
         </Tabs>
       </div>
