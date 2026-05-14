@@ -5,24 +5,24 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #0F172A;
-  --color-foreground: #F8FAFC;
-  --color-card: #111827;
-  --color-card-foreground: #F8FAFC;
-  --color-popover: #111827;
-  --color-popover-foreground: #F8FAFC;
-  --color-primary: #4F46E5;
+  --color-background: #F8FAFC;
+  --color-foreground: #0B1F3A;
+  --color-card: #ffffff;
+  --color-card-foreground: #0B1F3A;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0B1F3A;
+  --color-primary: #0B1F3A;
   --color-primary-foreground: #F8FAFC;
-  --color-secondary: #1F2937;
-  --color-secondary-foreground: #F8FAFC;
-  --color-muted: #1F2937;
-  --color-muted-foreground: #94A3B8;
-  --color-accent: #0EA5E9;
-  --color-accent-foreground: #F8FAFC;
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #0B1F3A;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-accent: #F5C044;
+  --color-accent-foreground: #0B1F3A;
   --color-destructive: #ef4444;
-  --color-border: #1F2937;
-  --color-input: #1F2937;
-  --color-ring: #7C3AED;
+  --color-border: rgba(255, 255, 255, 0.25);
+  --color-input: #E2E8F0;
+  --color-ring: #0B1F3A;
   --color-chart-1: #4F46E5;
   --color-chart-2: #0EA5E9;
   --color-chart-3: #10B981;
@@ -37,9 +37,9 @@
   --color-sidebar-border: #1F2937;
   --color-sidebar-ring: #7C3AED;
   
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-playfair);
   
   --radius-sm: calc(0.625rem * 0.6);
   --radius-md: calc(0.625rem * 0.8);
@@ -59,5 +59,6 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 }

@@ -56,7 +56,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* Profile Card */}
-      <Card className="shadow-2xl border-white/10 bg-[#0F172A]/90 backdrop-blur-2xl overflow-visible mt-8 text-white rounded-3xl">
+      <Card className="shadow-2xl border-white/10 bg-primary text-primary-foreground/90 backdrop-blur-2xl overflow-visible mt-8 text-white rounded-3xl">
         <CardContent className="p-10 flex flex-col md:flex-row gap-12 relative">
 
           {/* Left Column - Avatar */}
@@ -72,7 +72,7 @@ export default function DashboardOverviewPage() {
             </div>
 
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-xl font-bold text-white">{userName}</h2>
+              <h2 className="text-xl font-bold text-white font-heading">{userName}</h2>
               <button className="text-slate-400 hover:text-white transition-colors">
                 <Edit2 className="h-4 w-4" />
               </button>
@@ -85,7 +85,7 @@ export default function DashboardOverviewPage() {
 
           {/* Right Column - Details */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-white mb-8">Your Profile</h2>
+            <h2 className="text-2xl font-bold text-white mb-8 font-heading">Your Profile</h2>
 
             <div className="space-y-6">
               {/* Contact Number */}
@@ -102,7 +102,7 @@ export default function DashboardOverviewPage() {
 
               {/* WhatsApp Checkbox */}
               <div className="flex items-center gap-2 pt-2">
-                <Checkbox id="whatsapp" defaultChecked className="rounded-sm border-white/20 data-[state=checked]:bg-white data-[state=checked]:text-[#0F172A] h-4 w-4" />
+                <Checkbox id="whatsapp" defaultChecked className="rounded-sm border-white/20 data-[state=checked]:bg-white data-[state=checked]:text-primary h-4 w-4" />
                 <label htmlFor="whatsapp" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-zinc-300">
                   Receive booking updates on WhatsApp?
                 </label>
@@ -128,9 +128,9 @@ export default function DashboardOverviewPage() {
 
       {/* My Trips Section */}
       <div className="pt-8 relative min-h-[400px]">
-        <h2 className="text-2xl font-bold text-[#0F172A] mb-8">My Trips</h2>
+        <h2 className="text-2xl font-bold text-primary mb-8 font-heading">My Trips</h2>
         <p className="text-slate-500 mb-16">
-          You don&apos;t have any plans yet. <Link href="/dashboard/trips" className="text-[#0F172A] hover:underline">Start Planning</Link>
+          You don&apos;t have any plans yet. <Link href="/dashboard/trips" className="text-primary hover:underline">Start Planning</Link>
         </p>
 
         {/* Decorative Illustration */}

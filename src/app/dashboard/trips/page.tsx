@@ -84,7 +84,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Trips</h1>
+            <h1 className="text-3xl font-bold tracking-tight font-heading">My Trips</h1>
             <p className="text-zinc-500 dark:text-zinc-400">
               Manage your upcoming adventures and itineraries.
             </p>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
             <div className="rounded-full bg-zinc-100 p-3 dark:bg-zinc-800">
               <MapPin className="h-6 w-6 text-zinc-500" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold">No trips found</h3>
+            <h3 className="mt-4 text-lg font-semibold font-heading">No trips found</h3>
             <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
               You haven't planned any trips yet. Create one to get started.
             </p>

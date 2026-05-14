@@ -16,7 +16,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto">
         {/* Yellow Subscription Box */}
         <div className="bg-[#FFEB3B] rounded-[2rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 mb-16 relative overflow-hidden">
-          <h2 className="text-3xl md:text-4xl font-bold text-black max-w-md">
+          <h2 className="text-3xl md:text-4xl font-bold text-black max-w-md font-heading">
             Good Vibes & Great Deals, Straight to You.
           </h2>
           <div className="flex w-full md:max-w-md items-center bg-white rounded-lg p-1 overflow-hidden">
@@ -44,7 +44,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-full bg-[#E60023] flex items-center justify-center cursor-pointer hover:opacity-80 transition"><PinterestIcon className="h-4 w-4 text-white fill-current" /></div>
             </div>
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-white mb-2">Contact Us</h3>
+              <h3 className="text-sm font-bold text-white mb-2 font-heading">Contact Us</h3>
               <p className="text-xs text-gray-400 flex items-center gap-2"><span>📞</span> +91 7827441548</p>
               <p className="text-xs text-gray-400 flex items-center gap-2"><span>✉️</span> info@traveloop.com</p>
             </div>
@@ -52,7 +52,7 @@ export function Footer() {
 
           {/* Links Columns */}
           <div>
-            <h3 className="text-sm font-bold text-white mb-6">Travel Destinations</h3>
+            <h3 className="text-sm font-bold text-white mb-6 font-heading">Travel Destinations</h3>
             <ul className="space-y-4 text-xs font-medium text-gray-400">
               <li><Link href="#" className="hover:text-white transition">Europe</Link></li>
               <li><Link href="#" className="hover:text-white transition">Asia</Link></li>
@@ -65,7 +65,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-6">Travel Styles</h3>
+            <h3 className="text-sm font-bold text-white mb-6 font-heading">Travel Styles</h3>
             <ul className="space-y-4 text-xs font-medium text-gray-400">
               <li><Link href="#" className="hover:text-white transition">Personalise</Link></li>
               <li><Link href="#" className="hover:text-white transition">La Tomatina</Link></li>
@@ -76,7 +76,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-6">Company</h3>
+            <h3 className="text-sm font-bold text-white mb-6 font-heading">Company</h3>
             <ul className="space-y-4 text-xs font-medium text-gray-400">
               <li><Link href="#" className="hover:text-white transition">Blogs</Link></li>
               <li><Link href="#" className="hover:text-white transition">For Corporates</Link></li>
@@ -87,7 +87,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-6">Terms & Policies</h3>
+            <h3 className="text-sm font-bold text-white mb-6 font-heading">Terms & Policies</h3>
             <ul className="space-y-4 text-xs font-medium text-gray-400">
               <li><Link href="#" className="hover:text-white transition">Terms of Service</Link></li>
               <li><Link href="#" className="hover:text-white transition">Privacy Policy</Link></li>

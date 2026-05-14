@@ -107,7 +107,7 @@ export function LocationSearch() {
           {query.trim().length === 0 ? (
             /* Empty State: Popular Destinations */
             <div className="p-4">
-              <h3 className="text-xs font-semibold text-zinc-400 mb-4 tracking-wider uppercase">
+              <h3 className="text-xs font-semibold text-zinc-400 mb-4 tracking-wider uppercase font-heading">
                 Popular Destinations
               </h3>
               <div className="grid grid-cols-2 gap-4">

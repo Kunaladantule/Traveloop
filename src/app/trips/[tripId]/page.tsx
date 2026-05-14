@@ -82,7 +82,7 @@ export default function TripItineraryPage() {
             <ShareTripModal tripId={trip.id} initialIsPublic={trip.isPublic} initialShareSlug={trip.shareSlug} />
           </div>
           <div className="text-white space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight shadow-sm">{trip.title}</h1>
+            <h1 className="text-4xl font-bold tracking-tight shadow-sm font-heading">{trip.title}</h1>
             <div className="flex items-center gap-4 text-sm font-medium opacity-90">
               <span className="flex items-center"><CalendarIcon className="mr-1 h-4 w-4" /> {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d, yyyy')}</span>
               {trip.totalBudget && <span className="flex items-center"><Wallet className="mr-1 h-4 w-4" /> ${trip.totalBudget.toLocaleString()}</span>}
@@ -103,7 +103,7 @@ export default function TripItineraryPage() {
           <TabsContent value="itinerary" className="mt-0">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                <h2 className="text-2xl font-semibold flex items-center gap-2 font-heading">
                   <Map className="h-6 w-6 text-indigo-500" /> Itinerary Builder
                 </h2>
                 <p className="text-zinc-500 text-sm mt-1">
@@ -118,7 +118,7 @@ export default function TripItineraryPage() {
 
           <TabsContent value="budget" className="mt-0">
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <h2 className="text-2xl font-semibold flex items-center gap-2 font-heading">
                 <Wallet className="h-6 w-6 text-indigo-500" /> Budget Tracker
               </h2>
               <p className="text-zinc-500 text-sm mt-1">
@@ -131,7 +131,7 @@ export default function TripItineraryPage() {
 
           <TabsContent value="packing" className="mt-0">
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <h2 className="text-2xl font-semibold flex items-center gap-2 font-heading">
                 <Briefcase className="h-6 w-6 text-indigo-500" /> Packing List
               </h2>
               <p className="text-zinc-500 text-sm mt-1">
@@ -144,7 +144,7 @@ export default function TripItineraryPage() {
 
           <TabsContent value="notes" className="mt-0">
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold flex items-center gap-2">
+              <h2 className="text-2xl font-semibold flex items-center gap-2 font-heading">
                 <StickyNote className="h-6 w-6 text-indigo-500" /> Trip Notes
               </h2>
               <p className="text-zinc-500 text-sm mt-1">

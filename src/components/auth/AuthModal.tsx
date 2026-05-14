@@ -91,9 +91,9 @@ export function AuthModal({ onAuthSuccess, trigger }: { onAuthSuccess?: () => vo
         setError(null)
       }
     }}>
-      <DialogTrigger asChild>
-        {trigger ? trigger : <Button variant="outline" className="border-zinc-300 font-medium rounded-lg px-6 text-zinc-900 bg-white hover:bg-zinc-100 shadow-sm">Login / Signup</Button>}
-      </DialogTrigger>
+      <DialogTrigger 
+        render={trigger ? trigger : <Button variant="outline" className="border-zinc-300 font-medium rounded-lg px-6 text-zinc-900 bg-white hover:bg-zinc-100 shadow-sm">Login / Signup</Button>} 
+      />
       {/* We use a dark translucent styling similar to the original login page */}
       <DialogContent className="sm:max-w-md !bg-[#1E1B4B]/90 backdrop-blur-xl border-white/10 text-white shadow-2xl">
         <div className="space-y-1 text-center mb-4">

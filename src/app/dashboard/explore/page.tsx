@@ -25,7 +25,7 @@ export default async function ExplorePage() {
   return (
     <div className="space-y-8 max-w-5xl">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2 font-heading">
           <Compass className="h-8 w-8 text-indigo-500" /> Explore Itineraries
         </h1>
         <p className="text-zinc-500 max-w-2xl">
@@ -36,7 +36,7 @@ export default async function ExplorePage() {
       {trips.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-zinc-950 border border-dashed rounded-xl">
           <Compass className="h-12 w-12 text-zinc-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">No public trips yet</h3>
+          <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 font-heading">No public trips yet</h3>
           <p className="text-zinc-500 mt-2">Be the first to share your itinerary with the world!</p>
         </div>
       ) : (
@@ -54,7 +54,7 @@ export default async function ExplorePage() {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end">
-                  <h3 className="text-white font-bold leading-tight truncate drop-shadow-sm">{trip.title}</h3>
+                  <h3 className="text-white font-bold leading-tight truncate drop-shadow-sm font-heading">{trip.title}</h3>
                 </div>
               </div>
               

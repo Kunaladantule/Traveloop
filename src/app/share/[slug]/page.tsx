@@ -54,7 +54,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute inset-0 p-8 flex flex-col justify-end max-w-4xl mx-auto text-center md:text-left">
           <div className="text-white space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight shadow-sm">{trip.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight shadow-sm font-heading">{trip.title}</h1>
             <div className="flex flex-col md:flex-row items-center gap-4 text-sm font-medium opacity-90 justify-center md:justify-start">
               <span className="flex items-center bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
                 <CalendarIcon className="mr-2 h-4 w-4" /> 
@@ -81,7 +81,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
       {/* Itinerary Content */}
       <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-12 py-12">
         <div className="text-center md:text-left space-y-2 border-b pb-6">
-          <h2 className="text-2xl font-bold">Trip Itinerary</h2>
+          <h2 className="text-2xl font-bold font-heading">Trip Itinerary</h2>
           <p className="text-zinc-500">Explore the stops and activities planned for this adventure.</p>
         </div>
 
@@ -101,7 +101,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
                 {/* Content Card */}
                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-zinc-900 p-6 rounded-xl border shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-xl text-zinc-900 dark:text-zinc-100">{stop.cityName}</h3>
+                    <h3 className="font-bold text-xl text-zinc-900 dark:text-zinc-100 font-heading">{stop.cityName}</h3>
                   </div>
                   <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-4 flex items-center">
                     {format(new Date(stop.startDate), 'MMM d')} - {format(new Date(stop.endDate), 'MMM d')}
@@ -132,7 +132,7 @@ export default async function PublicTripPage({ params }: { params: Promise<{ slu
 
         {/* CTA Footer */}
         <div className="mt-16 pt-12 border-t text-center space-y-6">
-          <h2 className="text-3xl font-bold tracking-tight">Inspired by this trip?</h2>
+          <h2 className="text-3xl font-bold tracking-tight font-heading">Inspired by this trip?</h2>
           <p className="text-zinc-500 max-w-md mx-auto">
             Create your own account on Traveloop to start planning your next adventure, track budgets, and share itineraries with friends.
           </p>

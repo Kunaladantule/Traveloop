@@ -130,7 +130,7 @@ export function PackingList({ tripId }: { tripId: string }) {
         ) : (
           CATEGORIES.filter(cat => groupedItems[cat] && groupedItems[cat].length > 0).map(cat => (
             <div key={cat} className="space-y-3">
-              <h3 className="font-semibold text-lg flex items-center text-zinc-800 dark:text-zinc-200 border-b pb-2">
+              <h3 className="font-semibold text-lg flex items-center text-zinc-800 dark:text-zinc-200 border-b pb-2 font-heading">
                 {cat}
                 <span className="ml-2 text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-full text-zinc-500 font-normal">
                   {groupedItems[cat].length}
