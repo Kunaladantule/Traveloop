@@ -1,0 +1,39 @@
+import type { Metadata } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
+import "./globals.css";
+import NextTopLoader from 'nextjs-toploader';
+import { Toaster } from '@/components/ui/sonner';
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Traveloop",
+  description: "Travel smarter with personalized plans.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-background text-foreground dark font-sans">
+        <NextTopLoader color="#4f46e5" showSpinner={false} height={3} shadow="0 0 10px #4f46e5,0 0 5px #4f46e5" />
+        {children}
+        <Toaster />
+      </body>
+    </html>
+  );
+}

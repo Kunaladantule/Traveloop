@@ -1,0 +1,65 @@
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500,600,700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: #F8FAFC;
+  --color-foreground: #0B1F3A;
+  --color-card: #ffffff;
+  --color-card-foreground: #0B1F3A;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0B1F3A;
+  --color-primary: #0B1F3A;
+  --color-primary-foreground: #F8FAFC;
+  --color-secondary: #F1F5F9;
+  --color-secondary-foreground: #0B1F3A;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-accent: #F5C044;
+  --color-accent-foreground: #0B1F3A;
+  --color-destructive: #ef4444;
+  --color-border: rgba(255, 255, 255, 0.25);
+  --color-input: #E2E8F0;
+  --color-ring: #0B1F3A;
+  --color-chart-1: #4F46E5;
+  --color-chart-2: #0EA5E9;
+  --color-chart-3: #10B981;
+  --color-chart-4: #F59E0B;
+  --color-chart-5: #7C3AED;
+  --color-sidebar: #111827;
+  --color-sidebar-foreground: #F8FAFC;
+  --color-sidebar-primary: #4F46E5;
+  --color-sidebar-primary-foreground: #F8FAFC;
+  --color-sidebar-accent: #1F2937;
+  --color-sidebar-accent-foreground: #F8FAFC;
+  --color-sidebar-border: #1F2937;
+  --color-sidebar-ring: #7C3AED;
+  
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: 'Clash Display', sans-serif;
+  
+  --radius-sm: calc(0.625rem * 0.6);
+  --radius-md: calc(0.625rem * 0.8);
+  --radius-lg: 0.625rem;
+  --radius-xl: calc(0.625rem * 1.4);
+  --radius-2xl: calc(0.625rem * 1.8);
+  --radius-3xl: calc(0.625rem * 2.2);
+  --radius-4xl: calc(0.625rem * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+}

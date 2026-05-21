@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  trips     Trip[]
+}
+
+model Trip {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  totalBudget Float?
+  coverImage  String?
+  isPublic    Boolean  @default(false)
+  shareSlug   String?  @unique
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stops       Stop[]
+  expenses    Expense[]
+  items       PackingItem[]
+  notes       Note[]
+}
+
+model Stop {
+  id        String   @id @default(cuid())
+  tripId    String
+  cityName  String
+  country   String
+  startDate DateTime
+  endDate   DateTime
+  order     Int
+
+  trip      Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  activities Activity[]
+  notes      Note[]
+}
+
+model Activity {
+  id       String  @id @default(cuid())
+  stopId   String
+  title    String
+  category String?
+  cost     Float?
+  duration Int?
+  notes    String?
+  order    Int
+
+  stop     Stop    @relation(fields: [stopId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id       String   @id @default(cuid())
+  tripId   String
+  category String
+  amount   Float
+  date     DateTime
+
+  trip     Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model PackingItem {
+  id       String  @id @default(cuid())
+  tripId   String
+  name     String
+  category String?
+  isPacked Boolean @default(false)
+
+  trip     Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  tripId    String
+  stopId    String?
+  content   String
+  createdAt DateTime @default(now())
+
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  stop      Stop?    @relation(fields: [stopId], references: [id], onDelete: SetNull)
+}
