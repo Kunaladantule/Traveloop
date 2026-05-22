@@ -128,19 +128,13 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
   }
 
   // Graceful offline fallback compiler using same Google Places dataset
-  const normDest = destination.toLowerCase().trim()
   const attractions = places.filter(p => !p.isMeal)
   const meals = places.filter(p => p.isMeal)
 
   let countryName = 'Global'
-  if (normDest.includes('india') || normDest.includes('mumbai') || normDest.includes('delhi') || normDest.includes('goa') || normDest.includes('nagpur')) {
-    countryName = 'India'
-  } else if (normDest.includes('japan') || normDest.includes('tokyo') || normDest.includes('nagasaki')) {
-    countryName = 'Japan'
-  } else if (normDest.includes('france') || normDest.includes('paris')) {
-    countryName = 'France'
-  } else if (normDest.includes('switzerland') || normDest.includes('zurich')) {
-    countryName = 'Switzerland'
+  if (destination.includes(',')) {
+    const parts = destination.split(',')
+    countryName = parts[parts.length - 1].trim()
   }
 
   const costPerDay = budget / days
@@ -154,16 +148,35 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
   if (vibe === 'Relaxation') tripIntensity = 'Relaxed'
   else if (vibe === 'Adventure' || vibe === 'Night Life') tripIntensity = 'High'
 
+  const defaultAttraction = {
+    name: `${destination} Highlight`,
+    rating: 4.6,
+    address: `${destination} Center`,
+    lat: 0,
+    lng: 0,
+    types: ['tourist_attraction']
+  }
+
+  const defaultMeal = {
+    name: `${destination} Dining Spot`,
+    rating: 4.5,
+    address: `${destination} Downtown`,
+    lat: 0,
+    lng: 0,
+    types: ['restaurant'],
+    isMeal: true
+  }
+
   const dailyItinerary = Array.from({ length: days }).map((_, idx) => {
     const spentDay = Math.round(costPerDay * 0.7)
     
-    // Pick from attractions/meals or fallback to global default
-    const dayAttraction1 = attractions[idx % attractions.length] || places[0]
-    const dayAttraction2 = attractions[(idx + 1) % attractions.length] || places[1] || places[0]
-    const dayAttraction3 = attractions[(idx + 2) % attractions.length] || places[2] || places[0]
+    // Pick from attractions/meals or fallback to custom defaults
+    const dayAttraction1 = attractions[idx % attractions.length] || defaultAttraction
+    const dayAttraction2 = attractions[(idx + 1) % attractions.length] || defaultAttraction
+    const dayAttraction3 = attractions[(idx + 2) % attractions.length] || defaultAttraction
 
-    const dayMeal1 = meals[idx % meals.length] || places[places.length - 1] || places[0]
-    const dayMeal2 = meals[(idx + 1) % meals.length] || places[places.length - 2] || places[0]
+    const dayMeal1 = meals[idx % meals.length] || defaultMeal
+    const dayMeal2 = meals[(idx + 1) % meals.length] || defaultMeal
 
     return {
       day: idx + 1,
@@ -223,28 +236,14 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
     }
   })
 
-  // Cover image mapping
-  let coverImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=600'
-  if (normDest.includes('mumbai')) {
-    coverImage = 'https://images.unsplash.com/photo-1570168007244-23704139443d?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('delhi')) {
-    coverImage = 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('goa')) {
-    coverImage = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('tokyo')) {
-    coverImage = 'https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('nagasaki')) {
-    coverImage = 'https://images.unsplash.com/photo-1590056697855-6b5d92e59df1?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('nagpur')) {
-    coverImage = 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&q=80&w=600'
-  } else if (normDest.includes('paris')) {
-    coverImage = 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=600'
-  }
+  // Cover image mapping: use photoUrl of first place with photo if available, else default
+  const validPhoto = places.find(p => p.photoUrl)?.photoUrl
+  const coverImage = validPhoto || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800'
 
   // Compile smartRecommendations from top offline spots or Google spots
-  const smartRecommendations = attractions.slice(0, 3).map(a => ({
+  const smartRecommendations = (attractions.length > 0 ? attractions.slice(0, 3) : [defaultAttraction]).map(a => ({
     name: a.name,
-    desc: `A highly recommended ${a.types.join(' or ')} located at ${a.address || 'destination area'}.`,
+    desc: `A highly recommended attraction located at ${a.address || 'destination area'}.`,
     rating: a.rating.toFixed(1)
   }))
 
@@ -265,3 +264,4 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
 
   return { success: true, itinerary: generatedItinerary, source: 'Traveloop Offline Grounding Engine' }
 }
+

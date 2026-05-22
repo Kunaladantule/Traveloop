@@ -77,74 +77,9 @@ interface Trip {
   }>
 }
 
-const DEFAULT_MOCK_TRIPS: Trip[] = [
-  {
-    id: 'mock_trip_1',
-    title: 'Tokyo Sakura Dream',
-    description: 'Spring getaway to witness cherry blossoms and explore futuristic electronics hubs.',
-    startDate: '2026-04-10T00:00:00.000Z',
-    endDate: '2026-04-18T00:00:00.000Z',
-    totalBudget: 15000,
-    coverImage: 'https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&q=80&w=600',
-    stops: [
-      { id: 's1', cityName: 'Tokyo', country: 'Japan' }
-    ],
-    expenses: [
-      { id: 'e1', amount: 3000, category: 'Transport' },
-      { id: 'e2', amount: 6000, category: 'Hotel' },
-      { id: 'e3', amount: 3000, category: 'Food' },
-      { id: 'e4', amount: 2500, category: 'Activities' },
-      { id: 'e5', amount: 500, category: 'Misc' }
-    ],
-    itineraryDays: [
-      {
-        day: 1,
-        totalSpent: 1200,
-        activities: [
-          { name: 'Sensō-ji Temple', time: '09:00 AM', rating: '4.7', city: 'Tokyo', expense: 200 },
-          { name: 'Traditional Udon Lunch', time: '01:00 PM', expense: 150, isMeal: true },
-          { name: 'Shibuya Crossing Explore', time: '03:00 PM', rating: '4.8', city: 'Tokyo', expense: 350 }
-        ]
-      },
-      {
-        day: 2,
-        totalSpent: 1800,
-        activities: [
-          { name: 'Meiji Jingu Shrine', time: '09:00 AM', rating: '4.6', city: 'Tokyo', expense: 100 },
-          { name: 'Teppanyaki Dinner Spot', time: '07:30 PM', expense: 800, isMeal: true },
-          { name: 'Harajuku Fashion Quarter', time: '02:00 PM', rating: '4.5', city: 'Tokyo', expense: 300 }
-        ]
-      }
-    ],
-    smartRecommendations: [
-      { name: 'Shinjuku Golden Gai Bars', desc: 'Historic cluster of tiny bars and cozy spots.', rating: '4.9' },
-      { name: 'Memory Lane Yakitori Stalls', desc: 'Atmospheric narrow alley full of local food joints.', rating: '4.8' }
-    ]
-  }
-]
+const DEFAULT_MOCK_TRIPS: Trip[] = []
 
-// Fallback Gems depending on destination
-const GEMS_DATABASE: Record<string, Array<{ name: string; type: string; desc: string; rating: string }>> = {
-  tokyo: [
-    { name: 'Golden Gai Hidden Alley', type: 'Bar/Nightlife', desc: 'A network of six narrow alleys packed with over 200 tiny micro-bars, offering intimate chats with locals.', rating: '4.9' },
-    { name: 'Café de L\'Ambre', type: 'Cafe', desc: 'Historic coffee shop in Ginza operating since 1948, serving aged coffee beans in a vintage rustic environment.', rating: '4.8' },
-    { name: 'Todoroki Valley', type: 'Nature', desc: 'A forested ravine located right in Tokyo, offering a peaceful walking trail next to a flowing river stream.', rating: '4.7' }
-  ],
-  paris: [
-    { name: 'Le Comptoir Général', type: 'Lounge/Bar', desc: 'A tropical hidden barn-like lounge situated beside the Canal Saint-Martin, decorated with vintage memorabilia.', rating: '4.8' },
-    { name: 'La Recyclerie', type: 'Cafe/Eco-hub', desc: 'A former railway station converted into a sustainable café, recycling hub, urban farm, and community yard.', rating: '4.7' },
-    { name: 'Musée de la Chasse et de la Nature', type: 'Museum', desc: 'An quirky museum located inside a historic manor House, celebrating hunting weapons, stuffed animals, and arts.', rating: '4.9' }
-  ],
-  kyoto: [
-    { name: 'Gion Kyoto Bar L\'Escamoteur', type: 'Speakeasy', desc: 'A magical potion-themed cocktail bar with secret doors and antique books.', rating: '4.9' },
-    { name: 'Sojo-an Tea Hut', type: 'Teahouse', desc: 'Hidden forest zen shelter offering quiet matcha brews away from tourist crowds.', rating: '4.8' }
-  ],
-  default: [
-    { name: 'The Local Artisans Cooperative', type: 'Market/Cafe', desc: 'A hidden local backyard workshop featuring organic espresso, homemade cakes, and hand-woven crafts.', rating: '4.7' },
-    { name: 'Secret Botanical Sanctuary', type: 'Park', desc: 'A quiet, walled conservatory garden built in the nineteenth century, popular with local painters.', rating: '4.8' },
-    { name: 'Underground Vinyl Lounge', type: 'Speakeasy', desc: 'Cozy basement bar with custom tube amplifiers and a massive library of vintage jazz records.', rating: '4.9' }
-  ]
-}
+
 
 function TripsPageInner() {
   const searchParams = useSearchParams()
@@ -382,11 +317,8 @@ function TripsPageInner() {
       { name: 'Misc', value: miscVal, color: '#f43f5e' }          // Rose
     ].filter(item => item.value > 0)
 
-    // Determine destination key for Gems database
-    const destNameClean = activeTrip.stops && activeTrip.stops.length > 0 
-      ? activeTrip.stops[0].cityName.toLowerCase() 
-      : 'default'
-    const hiddenGemsList = GEMS_DATABASE[destNameClean] || GEMS_DATABASE['default']
+    // Use dynamic recommendations for Hidden Gems
+    const hiddenGemsList = activeTrip.smartRecommendations || []
 
     return (
       <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-10">
@@ -843,7 +775,7 @@ function TripsPageInner() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                          {gem.type}
+                          {gem.type || 'Gem'}
                         </span>
                         <div className="flex items-center gap-0.5 text-amber-400 text-[10px]">
                           <Star className="h-3 w-3 fill-current" />

@@ -34,19 +34,6 @@ import { generateGeminiItinerary } from '@/app/actions/gemini'
 import { getGooglePlaceSuggestions, getGoogleMapsApiKey, PlacePrediction } from '@/app/actions/googlePlaces'
 import { GoogleMapWidget } from '@/components/GoogleMapWidget'
 
-const TOURIST_SPOTS = [
-  { name: 'Mumbai', country: 'India', spots: ['Gateway of India & Taj Palace', 'Marine Drive Queen\'s Necklace', 'Crawford Market'] },
-  { name: 'Delhi', country: 'India', spots: ['Red Fort Heritage Tour', 'Qutub Minar Complex', 'India Gate & Rajpath'] },
-  { name: 'Goa', country: 'India', spots: ['Calangute Beach Shacks', 'Basilica of Bom Jesus', 'Dudhsagar Waterfalls'] },
-  { name: 'Tokyo', country: 'Japan', spots: ['Sensō-ji Temple', 'Shibuya Crossing', 'Meiji Jingu Shrine'] },
-  { name: 'Kyoto', country: 'Japan', spots: ['Fushimi Inari-taisha', 'Arashiyama Bamboo Grove', 'Kinkaku-ji'] },
-  { name: 'Paris', country: 'France', spots: ['Eiffel Tower', 'Louvre Museum', 'Arc de Triomphe'] },
-  { name: 'Zurich', country: 'Switzerland', spots: ['Lake Zurich', 'Bahnhofstrasse', 'Grossmünster'] },
-  { name: 'Sydney', country: 'Australia', spots: ['Sydney Opera House', 'Bondi Beach', 'Darling Harbour'] },
-  { name: 'Rome', country: 'Italy', spots: ['Colosseum', 'Trevi Fountain', 'Vatican Museums'] },
-  { name: 'London', country: 'United Kingdom', spots: ['Big Ben', 'British Museum', 'London Eye'] },
-  { name: 'New York', country: 'United States', spots: ['Statue of Liberty', 'Central Park', 'Times Square'] }
-]
 
 const VIBES = [
   { id: 'Adventure', label: 'Adventure', desc: 'Thrilling treks and outdoor action' },
@@ -139,11 +126,6 @@ export default function AiPlannerPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Destinations Filter Suggestions (Curated)
-  const filteredSpots = TOURIST_SPOTS.filter(item => 
-    item.name.toLowerCase().includes(destination.toLowerCase()) ||
-    item.country.toLowerCase().includes(destination.toLowerCase())
-  )
 
   const handleDestinationChange = async (val: string) => {
     setDestination(val)
@@ -165,10 +147,6 @@ export default function AiPlannerPage() {
     }
   }
 
-  const handleLocalSuggestionSelect = (cityName: string, countryName: string) => {
-    setDestination(`${cityName}, ${countryName}`)
-    setShowSuggestions(false)
-  }
 
   const handleGoogleSuggestionSelect = (desc: string) => {
     setDestination(desc)
@@ -359,28 +337,7 @@ export default function AiPlannerPage() {
                       </div>
                     )}
 
-                    {/* Curated Local Fallbacks */}
-                    {filteredSpots.length > 0 && (
-                      <div className="flex flex-col">
-                        <div className="px-3 py-2 bg-zinc-900/60 text-[9px] font-black tracking-widest text-emerald-400 uppercase border-b border-zinc-850">⭐ Curated Destinations</div>
-                        {filteredSpots.map((item) => (
-                          <button
-                            key={item.name}
-                            type="button"
-                            onClick={() => handleLocalSuggestionSelect(item.name, item.country)}
-                            className="w-full text-left px-4 py-3 hover:bg-indigo-600/20 text-xs text-zinc-200 border-b border-zinc-900 last:border-0 transition-colors flex items-center justify-between"
-                          >
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-zinc-400" />
-                              <span className="font-bold text-zinc-100">{item.name}, {item.country}</span>
-                            </div>
-                            <span className="text-[10px] text-zinc-500 italic max-w-[150px] truncate">{item.spots.join(', ')}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {googleSuggestions.length === 0 && filteredSpots.length === 0 && (
+                    {googleSuggestions.length === 0 && (
                       <div className="p-4 text-center text-xs text-zinc-400">
                         No matching locations. Press enter or type a custom destination.
                       </div>
