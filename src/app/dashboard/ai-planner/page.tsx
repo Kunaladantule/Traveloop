@@ -1,31 +1,12 @@
+// app/dashboard/ai-planner/page.tsx
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
 import { 
-  Sparkles, 
-  MapPin, 
-  Calendar, 
-  ArrowRight, 
-  ArrowLeft, 
-  Compass, 
-  Star, 
-  DollarSign, 
-  Coins, 
-  Users, 
-  Activity, 
-  Utensils, 
-  Clock, 
-  Check, 
-  Search,
-  Briefcase,
-  Flower2,
-  Landmark,
-  Leaf,
-  Moon,
-  User,
-  Heart,
-  Home,
-  Wine
+  Sparkles, MapPin, Calendar, ArrowRight, ArrowLeft, Compass, 
+  Star, DollarSign, Users, Activity, Utensils, Clock, Check, 
+  Search, Briefcase, Flower2, Landmark, Leaf, Moon, User, 
+  Heart, Home, Wine, Loader2
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -34,40 +15,127 @@ import { generateGeminiItinerary } from '@/app/actions/gemini'
 import { getGooglePlaceSuggestions, getGoogleMapsApiKey, PlacePrediction } from '@/app/actions/googlePlaces'
 import { GoogleMapWidget } from '@/components/GoogleMapWidget'
 
-
+// ─────────────────────────────────────────────────────────────
+// 🎨 Travel Vibes & Companions (With Icons)
+// ─────────────────────────────────────────────────────────────
 const VIBES = [
   { id: 'Adventure', label: 'Adventure', desc: 'Thrilling treks and outdoor action' },
   { id: 'Relaxation', label: 'Relaxation', desc: 'Resorts, spas, and peaceful getaways' },
   { id: 'Culture', label: 'Culture', desc: 'Museums, historic tours, and heritage' },
-  { id: 'Food', label: 'Food', desc: 'Fine dining, street markets, and tasting' },
+  { id: 'Food', label: 'Foodie', desc: 'Fine dining, street markets, and tasting' },
   { id: 'Nature', label: 'Nature', desc: 'Parks, mountains, and wildlife scenic tours' },
-  { id: 'Night Life', label: 'Night Life', desc: 'Clubs, bars, and evening entertainment' },
+  { id: 'Night Life', label: 'Nightlife', desc: 'Clubs, bars, and evening entertainment' },
   { id: 'Family', label: 'Family', desc: 'Kid-friendly places and group activities' }
 ]
 
 const VIBE_ICONS: Record<string, React.ComponentType<any>> = {
-  Adventure: Compass,
-  Relaxation: Flower2,
-  Culture: Landmark,
-  Food: Utensils,
-  Nature: Leaf,
-  'Night Life': Moon,
-  Family: Users
+  Adventure: Compass, Relaxation: Flower2, Culture: Landmark,
+  Food: Utensils, Nature: Leaf, 'Night Life': Moon, Family: Users
 }
 
 const COMPANIONS = [
-  { id: 'Solo', label: 'Solo' },
-  { id: 'Couple', label: 'Couple' },
-  { id: 'Family', label: 'Family' },
-  { id: 'Friends', label: 'Friends' }
+  { id: 'Solo', label: 'Solo Traveler' },
+  { id: 'Couple', label: 'Romantic Couple' },
+  { id: 'Family', label: 'Family Trip' },
+  { id: 'Friends', label: 'Friends Getaway' }
 ]
 
 const COMPANION_ICONS: Record<string, React.ComponentType<any>> = {
-  Solo: User,
-  Couple: Heart,
-  Family: Home,
-  Friends: Wine
+  Solo: User, Couple: Heart, Family: Home, Friends: Wine
 }
+
+// ─────────────────────────────────────────────────────────────
+// 🧩 Reusable Components (Light Theme + Larger Text)
+// ─────────────────────────────────────────────────────────────
+
+const StepBadge = ({ step, current, label }: { step: number; current: number; label: string }) => {
+  const isActive = current >= step
+  const isCurrent = current === step
+  
+  return (
+    <div className={`flex items-center gap-2 transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
+      <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+        isCurrent 
+          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+          : isActive 
+            ? 'bg-indigo-100 text-indigo-700' 
+            : 'bg-slate-100 text-slate-500'
+      }`}>
+        {isActive && !isCurrent ? <Check className="h-4 w-4" /> : step}
+      </span>
+      <span className={`text-base font-semibold ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+        {label}
+      </span>
+    </div>
+  )
+}
+
+const VibeButton = ({ 
+  vibe, selected, onSelect 
+}: { 
+  vibe: typeof VIBES[0]; selected: boolean; onSelect: () => void 
+}) => {
+  const Icon = VIBE_ICONS[vibe.id] || Compass
+  
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`py-4 px-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center min-h-[100px] ${
+        selected 
+          ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
+          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50'
+      }`}
+    >
+      <Icon className={`h-7 w-7 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`} />
+      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-700'}`}>
+        {vibe.label}
+      </span>
+    </button>
+  )
+}
+
+const CompanionButton = ({ 
+  item, selected, onSelect 
+}: { 
+  item: typeof COMPANIONS[0]; selected: boolean; onSelect: () => void 
+}) => {
+  const Icon = COMPANION_ICONS[item.id] || User
+  
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`py-4 px-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 text-center min-h-[110px] ${
+        selected 
+          ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
+          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50'
+      }`}
+    >
+      <Icon className={`h-8 w-8 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-400'}`} />
+      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-700'}`}>
+        {item.label}
+      </span>
+    </button>
+  )
+}
+
+const StatCard = ({ label, value, sublabel, icon: Icon, color }: {
+  label: string; value: string; sublabel: string; icon: React.ElementType; color: string
+}) => (
+  <div className={`flex flex-col bg-white px-5 py-3.5 rounded-xl border border-slate-200 min-w-[120px] shadow-sm`}>
+    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+      <Icon className={`h-3.5 w-3.5 ${color}`} />
+      {label}
+    </span>
+    <span className="text-lg font-bold text-slate-900 mt-1">{value}</span>
+    {sublabel && <span className="text-[11px] text-slate-400 mt-0.5">{sublabel}</span>}
+  </div>
+)
+
+// ─────────────────────────────────────────────────────────────
+// 🚀 Main AI Planner Page Component
+// ─────────────────────────────────────────────────────────────
 
 export default function AiPlannerPage() {
   const [step, setStep] = useState<1 | 2>(1)
@@ -77,25 +145,26 @@ export default function AiPlannerPage() {
   // Form states
   const [destination, setDestination] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [numberOfDays, setNumberOfDays] = useState('5')
-  const [budget, setBudget] = useState('15000')
-  const [selectedVibe, setSelectedVibe] = useState('Culture')
-  const [companion, setCompanion] = useState('Friends')
+  const [numberOfDays, setNumberOfDays] = useState('')
+  const [budget, setBudget] = useState('')
+  const [selectedVibe, setSelectedVibe] = useState('')
+  const [companion, setCompanion] = useState('')
 
-  // Google places autocomplete predictions
+  // Google places autocomplete
   const [googleSuggestions, setGoogleSuggestions] = useState<PlacePrediction[]>([])
   const [googleMapsKey, setGoogleMapsKey] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [itinerary, setItinerary] = useState<any | null>(null)
 
+  const suggestionsRef = useRef<HTMLDivElement>(null)
+
+  // Load Google Maps API key
   useEffect(() => {
     getGoogleMapsApiKey().then(key => setGoogleMapsKey(key)).catch(err => console.error(err))
   }, [])
   
-  const suggestionsRef = useRef<HTMLDivElement>(null)
-
-  // Determine user resident country & currency symbol
+  // Load user preferences & setup outside click handler
   useEffect(() => {
     const userStr = localStorage.getItem('traveloop_user')
     if (userStr) {
@@ -103,12 +172,11 @@ export default function AiPlannerPage() {
         const u = JSON.parse(userStr)
         if (u.country) {
           setUserCountry(u.country)
-          
-          // Set Currency
           const c = u.country.toLowerCase()
           if (c.includes('india')) setCurrencySymbol('₹')
           else if (c.includes('united kingdom') || c.includes('uk')) setCurrencySymbol('£')
           else if (c.includes('france') || c.includes('germany') || c.includes('italy') || c.includes('spain') || c.includes('europe') || c.includes('switzerland')) setCurrencySymbol('€')
+          else if (c.includes('united arab emirates') || c.includes('uae') || c.includes('dubai') || c.includes('emirates')) setCurrencySymbol('AED')
           else setCurrencySymbol('$')
         }
       } catch (e) {
@@ -116,7 +184,6 @@ export default function AiPlannerPage() {
       }
     }
 
-    // Close suggestions on click outside
     function handleClickOutside(event: MouseEvent) {
       if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
         setShowSuggestions(false)
@@ -125,7 +192,6 @@ export default function AiPlannerPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
 
   const handleDestinationChange = async (val: string) => {
     setDestination(val)
@@ -147,22 +213,17 @@ export default function AiPlannerPage() {
     }
   }
 
-
   const handleGoogleSuggestionSelect = (desc: string) => {
     setDestination(desc)
     setShowSuggestions(false)
   }
 
   const handleGenerate = async () => {
-    if (!destination) {
-      alert('Please enter a destination.')
-      return
-    }
+    if (!destination) { alert('Please enter a destination.'); return }
     const daysNum = parseInt(numberOfDays) || 5
-    if (daysNum <= 0) {
-      alert('Please enter a valid number of days.')
-      return
-    }
+    if (daysNum <= 0) { alert('Please enter a valid number of days.'); return }
+    if (!selectedVibe) { alert('Please select a travel mood.'); return }
+    if (!companion) { alert('Please select who you are traveling with.'); return }
 
     setStep(2)
     setLoading(true)
@@ -173,12 +234,7 @@ export default function AiPlannerPage() {
 
     try {
       const res = await generateGeminiItinerary({
-        destination,
-        vibe: selectedVibe,
-        companion,
-        days: daysNum,
-        budget: numBudget,
-        currencySymbol
+        destination, vibe: selectedVibe, companion, days: daysNum, budget: numBudget, currencySymbol
       })
 
       const elapsed = Date.now() - startTime
@@ -203,7 +259,6 @@ export default function AiPlannerPage() {
 
   const handleSaveTrip = () => {
     if (!itinerary) return
-
     const userStr = localStorage.getItem('traveloop_user')
     if (!userStr) return
 
@@ -213,7 +268,6 @@ export default function AiPlannerPage() {
     const currentTrips = stored ? JSON.parse(stored) : []
 
     const totalSpentSum = itinerary.dailyItinerary.reduce((sum: number, d: any) => sum + d.totalSpent, 0)
-
     const sDate = new Date()
     const eDate = new Date()
     eDate.setDate(sDate.getDate() + (parseInt(numberOfDays) || 5))
@@ -226,9 +280,7 @@ export default function AiPlannerPage() {
       endDate: eDate.toISOString(),
       totalBudget: parseFloat(budget) || 15000,
       coverImage: itinerary.coverImage,
-      stops: [
-        { id: 's_auto_1', cityName: itinerary.destination, country: itinerary.country }
-      ],
+      stops: [{ id: 's_auto_1', cityName: itinerary.destination, country: itinerary.country }],
       expenses: [
         { id: 'exp_t', amount: Math.round(totalSpentSum * 0.20), category: 'Transport' },
         { id: 'exp_h', amount: Math.round(totalSpentSum * 0.40), category: 'Hotel' },
@@ -242,464 +294,480 @@ export default function AiPlannerPage() {
 
     currentTrips.unshift(newTrip)
     localStorage.setItem(localTripsKey, JSON.stringify(currentTrips))
-
-    alert('AI Trip itinerary saved successfully!')
+    alert('✅ AI Trip itinerary saved successfully!')
     window.location.href = `/dashboard/trips?id=${newTrip.id}`
   }
 
-  const handleQuickBudget = (value: string) => {
-    setBudget(value)
-  }
+  const handleQuickBudget = (value: string) => setBudget(value)
 
-  return (
-    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-10">
-      
-      {/* BRAND & PROCESS TIMELINE HEADER */}
-      <section className="flex flex-col gap-6 items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-            <Compass className="h-5.5 w-5.5 text-white" />
-          </div>
-          <span className="font-heading font-extrabold text-2xl tracking-wider">Traveloop AI</span>
-        </div>
-
-        {/* Timeline Progress steps */}
-        <div className="flex items-center justify-center gap-3 md:gap-5 text-xs text-zinc-500 font-medium bg-zinc-950/40 border border-zinc-900 px-6 py-3 rounded-full backdrop-blur-md">
-          <div className={`flex items-center gap-1.5 transition-colors ${step >= 1 ? 'text-indigo-400 font-bold' : ''}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-indigo-650 text-white font-bold`}>1</span>
-            Destination
-          </div>
-          <span className="text-zinc-800">&gt;</span>
-          
-          <div className={`flex items-center gap-1.5 transition-colors ${step >= 1 ? 'text-indigo-400 font-bold' : ''}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-indigo-650 text-white font-bold`}>2</span>
-            Preferences
-          </div>
-          <span className="text-zinc-800">&gt;</span>
-          
-          <div className={`flex items-center gap-1.5 transition-colors ${step === 2 ? 'text-indigo-400 font-bold' : ''}`}>
-            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-              step === 2 ? 'bg-indigo-600 text-white font-bold' : 'bg-zinc-900 border border-zinc-800'
-            }`}>3</span>
-            Generate
-          </div>
-        </div>
-      </section>
-
-      {/* STEP 1: UNIFIED SINGLE PAGE CONFIG FORM */}
-      {step === 1 && (
-        <div className="flex flex-col gap-6">
-          
-          {/* Card 1: Where to? */}
-          <Card className="bg-zinc-900/80 border-zinc-800/80 rounded-3xl p-6 md:p-8 backdrop-blur-3xl relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
-            <div className="flex flex-col gap-6 relative z-10">
-              <div>
-                <h2 className="font-heading font-black text-xl text-zinc-100 flex items-center gap-2">📍 Where to?</h2>
-                <p className="text-zinc-400 text-xs mt-1">Specify your desired city or country. We will autocomplete using Google Places API.</p>
-              </div>
-
-              {/* Destination Search suggestions */}
-              <div className="flex flex-col gap-2 relative">
-                <label className="text-xs font-black text-zinc-350 uppercase tracking-wider flex items-center gap-1.5">Destination *</label>
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
-                  <Input 
-                    placeholder="Search City or Country..."
-                    value={destination}
-                    onChange={(e) => handleDestinationChange(e.target.value)}
-                    onFocus={() => setShowSuggestions(true)}
-                    className="pl-10 pr-4 bg-zinc-950/80 border-zinc-700/60 rounded-xl text-zinc-100 placeholder-zinc-500 focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/80 text-sm py-5.5"
-                  />
-                </div>
-
-                {/* Suggestions Panel */}
-                {showSuggestions && (
-                  <div ref={suggestionsRef} className="absolute top-[calc(100%+6px)] inset-x-0 bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl z-50 backdrop-blur-3xl max-h-64 overflow-y-auto">
-                    {/* Google Autocomplete Predictions */}
-                    {googleSuggestions.length > 0 && (
-                      <div className="flex flex-col">
-                        <div className="px-3 py-2 bg-zinc-900/60 text-[9px] font-black tracking-widest text-indigo-400 uppercase border-b border-zinc-850">📍 Google Places API</div>
-                        {googleSuggestions.map((item) => (
-                          <button
-                            key={item.placeId}
-                            type="button"
-                            onClick={() => handleGoogleSuggestionSelect(item.description)}
-                            className="w-full text-left px-4 py-3 hover:bg-indigo-600/20 text-xs text-zinc-200 border-b border-zinc-900 last:border-0 transition-colors flex items-center gap-2.5"
-                          >
-                            <MapPin className="h-4 w-4 text-zinc-400" />
-                            <div className="flex flex-col">
-                              <span className="font-bold text-zinc-100">{item.mainText}</span>
-                              {item.secondaryText && <span className="text-[10px] text-zinc-500">{item.secondaryText}</span>}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {googleSuggestions.length === 0 && (
-                      <div className="p-4 text-center text-xs text-zinc-400">
-                        No matching locations. Press enter or type a custom destination.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Number of Days & Budget Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black text-zinc-350 uppercase tracking-wider flex items-center gap-1.5">Number of Days *</label>
-                  <Input 
-                    type="number"
-                    placeholder="e.g. 5"
-                    value={numberOfDays}
-                    onChange={(e) => setNumberOfDays(e.target.value)}
-                    className="bg-zinc-950/80 border-zinc-700/60 rounded-xl text-zinc-150 text-sm py-5.5 focus:border-indigo-500/85"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-zinc-350 uppercase tracking-wider flex items-center gap-1.5">Total Budget *</label>
-                    <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-wider">Currency: {userCountry}</span>
-                  </div>
-                  
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 font-bold text-base pointer-events-none">
-                      {currencySymbol}
-                    </div>
-                    <Input 
-                      type="number"
-                      placeholder="Enter budget..."
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                      className="pl-8 bg-zinc-950/80 border-zinc-700/60 rounded-xl text-zinc-100 text-sm py-5.5 focus:border-indigo-500/85"
-                    />
-                  </div>
-
-                  {/* Pre budget sets */}
-                  <div className="flex items-center gap-2 mt-1">
-                    {['5000', '15000', '20000', '50000'].map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => handleQuickBudget(val)}
-                        className={`px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wide transition-all ${
-                          budget === val 
-                            ? 'bg-indigo-600/30 border-indigo-500/80 text-indigo-200 shadow-md' 
-                            : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900'
-                        }`}
-                      >
-                        {(parseInt(val) / 1000)}K
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+  // ─────────────────────────────────────────────────────────────
+  // 🎯 STEP 1: Trip Configuration Form (Light Theme + Larger Text)
+  // ─────────────────────────────────────────────────────────────
+  if (step === 1) {
+    return (
+      <div className="flex flex-col gap-10 max-w-5xl mx-auto pb-12">
+        
+        {/* 🧭 Header: Brand + Progress Steps */}
+        <section className="flex flex-col items-center gap-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+              <Compass className="h-6 w-6 text-white" />
             </div>
-          </Card>
-
-          {/* Card 2: Travel Mood */}
-          <Card className="bg-zinc-900/80 border-zinc-800/80 rounded-3xl p-6 md:p-8 backdrop-blur-3xl relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none" />
-            <div className="flex flex-col gap-6 relative z-10">
-              <div>
-                <h2 className="font-heading font-black text-xl text-zinc-100 flex items-center gap-2">💜 Travel Mood *</h2>
-              </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3 justify-center">
-                {VIBES.map((vibe) => {
-                  const isSelected = selectedVibe === vibe.id
-                  const IconComp = VIBE_ICONS[vibe.id] || Compass
-                  return (
-                    <button
-                      key={vibe.id}
-                      type="button"
-                      onClick={() => setSelectedVibe(vibe.id)}
-                      className={`py-5 px-2 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2 text-center ${
-                        isSelected 
-                          ? 'bg-indigo-650/30 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.25)] font-bold' 
-                          : 'bg-zinc-950/40 border-zinc-850 text-zinc-400 hover:border-zinc-750 hover:bg-zinc-900/60 hover:text-zinc-200'
-                      }`}
-                    >
-                      <IconComp className="h-6 w-6 text-indigo-400" />
-                      <span className="text-xs font-bold leading-tight">{vibe.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </Card>
-
-          {/* Card 3: Travelling As */}
-          <Card className="bg-zinc-900/80 border-zinc-800/80 rounded-3xl p-6 md:p-8 backdrop-blur-3xl relative overflow-hidden shadow-2xl">
-            <div className="flex flex-col gap-6 relative z-10">
-              <div>
-                <h2 className="font-heading font-black text-xl text-zinc-100 flex items-center gap-2">👥 Travelling As</h2>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {COMPANIONS.map((item) => {
-                  const isSelected = companion === item.id
-                  const IconComp = COMPANION_ICONS[item.id] || User
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setCompanion(item.id)}
-                      className={`py-5 px-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-2.5 text-center ${
-                        isSelected 
-                          ? 'bg-violet-600/25 border-violet-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)] font-bold' 
-                          : 'bg-zinc-950/40 border-zinc-850 text-zinc-400 hover:border-zinc-750 hover:bg-zinc-900/60 hover:text-zinc-200'
-                      }`}
-                    >
-                      <IconComp className="h-6 w-6 text-violet-400" />
-                      <span className="text-xs font-bold leading-tight">{item.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </Card>
-
-          {/* Action Button */}
-          <div className="mt-4">
-            <Button
-              onClick={handleGenerate}
-              className="w-full py-7 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.35)] transition-all"
-            >
-              <Sparkles className="h-5 w-5 animate-pulse" />
-              Generate Itinerary 🚀
-            </Button>
+            <span className="font-heading font-bold text-2xl text-slate-900 tracking-tight">Traveloop AI ✨</span>
           </div>
 
-        </div>
-      )}
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center gap-6 md:gap-8 text-base font-medium bg-white border border-slate-200 px-6 py-3.5 rounded-full shadow-sm">
+            <StepBadge step={1} current={step} label="Destination" />
+            <span className="text-slate-300 text-xl">•</span>
+            <StepBadge step={2} current={step} label="Preferences" />
+            <span className="text-slate-300 text-xl">•</span>
+            <StepBadge step={3} current={step} label="Generate" />
+          </div>
+        </section>
 
-      {/* STEP 2: GENERATOR TELEMETRY OR RESULTS SCREEN */}
-      {step === 2 && (
-        <div className="w-full flex flex-col gap-8">
+        {/* 📍 Card 1: Destination & Budget */}
+        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none" />
           
-          {/* A. Loader / Generator State climber */}
-          {loading && (
-            <div className="border border-zinc-800/80 rounded-3xl bg-zinc-900/80 p-12 min-h-[420px] flex flex-col justify-center items-center text-center gap-6 backdrop-blur-3xl relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/15 rounded-full blur-[100px] pointer-events-none" />
+          <div className="flex flex-col gap-7 relative z-10">
+            <div>
+              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-indigo-600" />
+                Where would you like to go?
+              </h2>
+              <p className="text-lg text-slate-600 mt-2">
+                Search for a city, country, or landmark. We'll autocomplete suggestions using Google Places.
+              </p>
+            </div>
+
+            {/* Destination Search */}
+            <div className="flex flex-col gap-3 relative">
+              <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Destination *</label>
               <div className="relative">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center animate-pulse">
-                  <Sparkles className="h-8 w-8 text-indigo-300 animate-spin duration-[4000ms]" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-purple-500 rounded-full animate-ping" />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <h3 className="font-heading font-extrabold text-2xl text-zinc-100">Consulting TripO Engine...</h3>
-                <p className="text-zinc-300 text-sm max-w-md mx-auto leading-relaxed font-medium">Instantly compiling geographic coordinate maps, local cafe ratings, and hotel budget insights using real-time Google Places datasets. 🌍</p>
-              </div>
-              <div className="w-48 h-1.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
-                <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-[shimmer_1.5s_infinite] w-3/4" style={{ backgroundSize: '200% 100%' }} />
-              </div>
-            </div>
-          )}
-
-          {/* B. Generated Itinerary view */}
-          {!loading && itinerary && (
-            <div className="flex flex-col gap-8">
-              
-              {/* 1. TOP SUMMARY METRICS BANNER */}
-              <div className="relative rounded-3xl overflow-hidden border border-indigo-500/20 bg-zinc-900/80 p-6 backdrop-blur-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-650/30 border border-indigo-400/35 flex items-center justify-center">
-                    <MapPin className="h-7 w-7 text-indigo-400" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-indigo-400 tracking-widest uppercase">📍 Destination</span>
-                    <h2 className="text-2xl font-black text-zinc-100 leading-none">{itinerary.destination}</h2>
-                  </div>
-                </div>
-
-                {/* Grid summary metrics */}
-                <div className="grid grid-cols-2 md:flex items-center gap-4 md:gap-8 text-xs w-full md:w-auto">
-                  <div className="flex flex-col bg-zinc-950/60 px-4 py-2.5 rounded-xl border border-zinc-800/80 min-w-[100px]">
-                    <span className="text-zinc-400 text-[9px] uppercase font-bold tracking-wider">🎭 Vibe</span>
-                    <span className="text-zinc-100 font-extrabold mt-0.5">{itinerary.vibe}</span>
-                  </div>
-                  <div className="flex flex-col bg-zinc-950/60 px-4 py-2.5 rounded-xl border border-zinc-800/80 min-w-[100px]">
-                    <span className="text-zinc-400 text-[9px] uppercase font-bold tracking-wider">👥 Travelers</span>
-                    <span className="text-zinc-100 font-extrabold mt-0.5">{itinerary.companion}</span>
-                  </div>
-                  <div className="flex flex-col bg-zinc-950/60 px-4 py-2.5 rounded-xl border border-zinc-800/80 min-w-[100px]">
-                    <span className="text-zinc-400 text-[9px] uppercase font-bold tracking-wider">📅 Duration</span>
-                    <span className="text-zinc-100 font-extrabold mt-0.5">{itinerary.days} Days</span>
-                  </div>
-                  <div className="flex flex-col bg-zinc-950/60 px-4 py-2.5 rounded-xl border border-zinc-800/80 min-w-[100px]">
-                    <span className="text-zinc-400 text-[9px] uppercase font-bold tracking-wider">💰 Budget Limit</span>
-                    <span className="text-emerald-400 font-extrabold mt-0.5">{currencySymbol}{itinerary.budget.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. BUDGET CATEGORY & DETAILS PANEL */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-md">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">💵 Budget Vibe</span>
-                  <div className="mt-2 text-lg font-black text-indigo-300">{itinerary.category} Tier</div>
-                  <span className="text-[10px] text-zinc-450 mt-1 block">Relative cost per person</span>
-                </div>
-                
-                <div className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-md">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">💸 Daily Average Spent</span>
-                  <div className="mt-2 text-lg font-black text-emerald-400">
-                    {currencySymbol}{Math.round(itinerary.budget / itinerary.days).toLocaleString()}
-                  </div>
-                  <span className="text-[10px] text-zinc-450 mt-1 block">Allocated schedule cost</span>
-                </div>
-
-                <div className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-md">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">⚡ Trip Intensity</span>
-                  <div className="mt-2 text-lg font-black text-violet-300">{itinerary.tripIntensity} Pace</div>
-                  <span className="text-[10px] text-zinc-450 mt-1 block">Daily energy demand</span>
-                </div>
-
-                <div className="group relative rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 backdrop-blur-md">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">🎯 Mapped Attractions</span>
-                  <div className="mt-2 text-lg font-black text-zinc-100">{itinerary.attractionsCount} Hotspots</div>
-                  <span className="text-[10px] text-zinc-450 mt-1 block">Google Places synced</span>
-                </div>
-              </div>
-
-              {/* Interactive Google Map Route Section */}
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-heading font-black text-xl text-zinc-150 flex items-center gap-2">
-                    🗺️ Route Visualization Map
-                  </h3>
-                  <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Synced Live Coordinates</span>
-                </div>
-                <GoogleMapWidget 
-                  activities={itinerary.dailyItinerary.flatMap((d: any) => d.activities)} 
-                  apiKey={googleMapsKey} 
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                <Input 
+                  placeholder="Search city or country..."
+                  value={destination}
+                  onChange={(e) => handleDestinationChange(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="pl-12 pr-4 bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
 
-              {/* 3. DAY WISE ITINERARY PANELS */}
-              <div className="flex flex-col gap-6">
-                <h3 className="font-heading font-black text-2xl text-zinc-100 flex items-center gap-2">
-                  <Briefcase className="h-5.5 w-5.5 text-indigo-400" />
-                  Your Itinerary
-                </h3>
-
-                <div className="flex flex-col gap-6">
-                  {itinerary.dailyItinerary.map((d: any) => (
-                    <div 
-                      key={d.day} 
-                      className="rounded-2xl border border-zinc-900 bg-zinc-950/50 p-6 flex flex-col gap-4 relative overflow-hidden"
+              {/* Google Places Suggestions Dropdown */}
+              {showSuggestions && googleSuggestions.length > 0 && (
+                <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xl z-50 max-h-72 overflow-y-auto">
+                  <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                    <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide flex items-center gap-1.5">
+                      <Search className="h-3.5 w-3.5" />
+                      Google Places Suggestions
+                    </span>
+                  </div>
+                  {googleSuggestions.map((item) => (
+                    <button
+                      key={item.placeId}
+                      type="button"
+                      onClick={() => handleGoogleSuggestionSelect(item.description)}
+                      className="w-full text-left px-5 py-3.5 hover:bg-indigo-50 text-slate-800 border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3"
                     >
-                      {/* Day heading bar */}
-                      <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded-lg bg-indigo-600/10 border border-indigo-500/25 flex items-center justify-center text-xs font-bold text-indigo-400">D{d.day}</span>
-                          <span className="text-sm font-extrabold text-zinc-200">Day {d.day} Overview</span>
-                        </div>
-                        <span className="text-xs font-medium text-zinc-400">
-                          Daily Spent: <span className="font-bold text-indigo-400">{currencySymbol}{d.totalSpent}</span>
-                        </span>
+                      <MapPin className="h-5 w-5 text-slate-400 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-slate-900 text-base">{item.mainText}</span>
+                        {item.secondaryText && <span className="text-sm text-slate-500">{item.secondaryText}</span>}
                       </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                      {/* Activities List */}
-                      <div className="flex flex-col gap-4 relative pl-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-indigo-950">
-                        {d.activities.map((act: any, idx: number) => {
-                          if (act.isMeal) {
-                            return (
-                              <div key={idx} className="flex items-center gap-3 bg-zinc-900/30 px-4 py-2.5 rounded-xl border border-zinc-900/60 my-1">
-                                <Utensils className="h-4 w-4 text-violet-400 flex-shrink-0" />
-                                <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-1">
-                                  <span className="text-xs text-zinc-300 font-medium">{act.name}</span>
-                                  <span className="text-[10px] text-zinc-500 font-bold">Est: {currencySymbol}{act.expense}</span>
-                                </div>
-                              </div>
-                            )
-                          }
+            {/* Days & Budget Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Number of Days */}
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Number of Days *</label>
+                <Input 
+                  type="number"
+                  min="1"
+                  max="30"
+                  placeholder="e.g., 7"
+                  value={numberOfDays}
+                  onChange={(e) => setNumberOfDays(e.target.value)}
+                  className="bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                />
+              </div>
 
-                          return (
-                            <div key={idx} className="group relative flex items-start gap-4 text-zinc-400">
-                              {/* Timing Bullet */}
-                              <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 border border-indigo-400 absolute left-[-16px] top-1.5 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-                              
-                              <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-zinc-950/20 hover:bg-zinc-900/10 p-3 rounded-xl border border-transparent hover:border-zinc-900 transition-all">
-                                <div className="flex flex-col gap-1.5">
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-3.5 w-3.5 text-zinc-500" />
-                                    <span className="text-[10px] font-bold text-zinc-500 font-mono">{act.time}</span>
-                                    <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800/80">{act.city}</span>
-                                  </div>
-                                  <h4 className="text-xs font-bold text-zinc-200 group-hover:text-indigo-300 transition-colors">{act.name}</h4>
-                                </div>
+              {/* Budget */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Total Budget *</label>
+                  <span className="text-sm font-semibold text-indigo-700">Currency: {currencySymbol}</span>
+                </div>
+                
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600 font-bold text-lg pointer-events-none">
+                    {currencySymbol}
+                  </span>
+                  <Input 
+                    type="number"
+                    placeholder="Enter your budget..."
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    className="pl-10 bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  />
+                </div>
 
-                                <div className="flex items-center gap-3 text-[10px]">
-                                  {act.rating && (
-                                    <div className="flex items-center gap-0.5 text-amber-400">
-                                      <Star className="h-3 w-3 fill-current" />
-                                      <span className="font-bold">{act.rating}</span>
-                                    </div>
-                                  )}
-                                  <span className="text-zinc-500">
-                                    Expense: <span className="font-bold text-zinc-300">{act.expense > 0 ? `${currencySymbol}${act.expense}` : 'Free'}</span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
+                {/* Quick Budget Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-500">Quick select:</span>
+                  {['5000', '15000', '25000', '50000'].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => handleQuickBudget(val)}
+                      className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                        budget === val 
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
+                          : 'bg-white border-slate-300 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50'
+                      }`}
+                    >
+                      {currencySymbol}{(parseInt(val) / 1000)}K
+                    </button>
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </Card>
 
-              {/* SMART RECOMMENDATIONS */}
-              <div className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-6 flex flex-col gap-4">
-                <h4 className="text-sm font-black text-indigo-300 flex items-center gap-2">
-                  <Sparkles className="h-4.5 w-4.5 animate-pulse" />
-                  Smart Recommendations
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {itinerary.smartRecommendations.map((rec: any, idx: number) => (
-                    <div key={idx} className="bg-zinc-950/40 border border-zinc-900 p-4 rounded-xl flex flex-col justify-between gap-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-black text-zinc-500 uppercase">Hidden Spot</span>
-                          <div className="flex items-center gap-0.5 text-amber-400 text-[10px]">
-                            <Star className="h-3 w-3 fill-current" />
-                            <span className="font-bold">{rec.rating}</span>
+        {/* 💜 Card 2: Travel Mood */}
+        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-purple-100/50 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col gap-7 relative z-10">
+            <div>
+              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-indigo-600" />
+                What's your travel vibe?
+              </h2>
+              <p className="text-lg text-slate-600 mt-2">
+                Choose the mood that best matches your dream trip.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              {VIBES.map((vibe) => (
+                <VibeButton
+                  key={vibe.id}
+                  vibe={vibe}
+                  selected={selectedVibe === vibe.id}
+                  onSelect={() => setSelectedVibe(vibe.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* 👥 Card 3: Traveling With */}
+        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50">
+          <div className="flex flex-col gap-7">
+            <div>
+              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+                <Users className="h-6 w-6 text-indigo-600" />
+                Who are you traveling with?
+              </h2>
+              <p className="text-lg text-slate-600 mt-2">
+                This helps us tailor recommendations to your group.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {COMPANIONS.map((item) => (
+                <CompanionButton
+                  key={item.id}
+                  item={item}
+                  selected={companion === item.id}
+                  onSelect={() => setCompanion(item.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* 🚀 Generate Button */}
+        <div className="pt-2">
+          <Button
+            onClick={handleGenerate}
+            disabled={!destination || !numberOfDays || !budget || !selectedVibe || !companion}
+            className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          >
+            <Sparkles className="h-6 w-6 animate-pulse" />
+            Generate My AI Itinerary ✨
+          </Button>
+          <p className="text-center text-sm text-slate-500 mt-3">
+            Takes about 30 seconds • Powered by Google Places + Gemini AI
+          </p>
+        </div>
+
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 🎯 STEP 2: Loading or Results View (Light Theme + Larger Text)
+  // ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col gap-10 max-w-6xl mx-auto pb-12">
+      
+      {/* 🧭 Header: Back Button + Title */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => { setStep(1); setLoading(false) }}
+          className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-semibold"
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Edit Preferences
+        </Button>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <StepBadge step={1} current={2} label="" />
+          <StepBadge step={2} current={2} label="" />
+          <StepBadge step={3} current={2} label="" />
+        </div>
+      </div>
+
+      {/* ⏳ Loading State */}
+      {loading && (
+        <Card className="bg-white border-slate-200 rounded-3xl p-12 min-h-[400px] flex flex-col justify-center items-center text-center gap-6 shadow-lg">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center">
+              <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full animate-ping" />
+          </div>
+
+          <div className="flex flex-col gap-3 max-w-md">
+            <h3 className="font-heading font-bold text-2xl text-slate-900">
+              Crafting your perfect itinerary... ✨
+            </h3>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Our AI is analyzing {destination}, finding top-rated attractions, calculating optimal routes, and building a personalized day-by-day plan just for you.
+            </p>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="w-64 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse w-3/4" />
+          </div>
+        </Card>
+      )}
+
+      {/* ✅ Generated Itinerary Results */}
+      {!loading && itinerary && (
+        <div className="flex flex-col gap-10">
+          
+          {/* 🎯 Summary Banner */}
+          <Card className="bg-white border-indigo-200 rounded-3xl p-6 md:p-8 shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-100/50 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+              {/* Destination Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center">
+                  <MapPin className="h-8 w-8 text-indigo-600" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">📍 Destination</span>
+                  <h2 className="font-heading font-bold text-3xl text-slate-900 leading-tight">
+                    {itinerary.destination}
+                  </h2>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
+                <StatCard label="Vibe" value={itinerary.vibe} sublabel="" icon={Sparkles} color="text-indigo-600" />
+                <StatCard label="Travelers" value={itinerary.companion} sublabel="" icon={Users} color="text-purple-600" />
+                <StatCard label="Duration" value={`${itinerary.days} Days`} sublabel="" icon={Calendar} color="text-emerald-600" />
+                <StatCard label="Budget" value={`${currencySymbol}${itinerary.budget.toLocaleString()}`} sublabel="Total" icon={DollarSign} color="text-amber-600" />
+              </div>
+            </div>
+          </Card>
+
+          {/* 📊 Budget & Insights Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
+              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">💵 Budget Tier</span>
+              <div className="mt-2 text-2xl font-bold text-indigo-700">{itinerary.category}</div>
+              <span className="text-sm text-slate-500 mt-1 block">Cost level per person</span>
+            </Card>
+            
+            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
+              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">💸 Daily Average</span>
+              <div className="mt-2 text-2xl font-bold text-emerald-700">
+                {currencySymbol}{Math.round(itinerary.budget / itinerary.days).toLocaleString()}
+              </div>
+              <span className="text-sm text-slate-500 mt-1 block">Per day allocation</span>
+            </Card>
+
+            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
+              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">⚡ Trip Pace</span>
+              <div className="mt-2 text-2xl font-bold text-violet-700">{itinerary.tripIntensity}</div>
+              <span className="text-sm text-slate-500 mt-1 block">Energy level</span>
+            </Card>
+
+            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
+              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">🎯 Attractions</span>
+              <div className="mt-2 text-2xl font-bold text-slate-900">{itinerary.attractionsCount}+</div>
+              <span className="text-sm text-slate-500 mt-1 block">Google Places verified</span>
+            </Card>
+          </div>
+
+          {/* 🗺️ Interactive Map */}
+          <Card className="bg-white border-slate-200 rounded-3xl p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading font-bold text-xl text-slate-900 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-indigo-600" />
+                Route Map
+              </h3>
+              <span className="text-sm font-semibold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
+                Live Coordinates
+              </span>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-slate-200">
+              <GoogleMapWidget 
+                activities={itinerary.dailyItinerary.flatMap((d: any) => d.activities)} 
+                apiKey={googleMapsKey} 
+              />
+            </div>
+          </Card>
+
+          {/* 📅 Day-by-Day Itinerary */}
+          <div className="flex flex-col gap-6">
+            <h3 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+              <Briefcase className="h-6 w-6 text-indigo-600" />
+              Your Day-by-Day Plan
+            </h3>
+
+            {itinerary.dailyItinerary.map((day: any) => (
+              <Card key={day.day} className="bg-white border-slate-200 rounded-2xl p-6 shadow-sm">
+                {/* Day Header */}
+                <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center text-base font-bold text-indigo-700">
+                      {day.day}
+                    </span>
+                    <span className="text-lg font-semibold text-slate-900">Day {day.day} Schedule</span>
+                  </div>
+                  <span className="text-sm font-medium text-slate-600">
+                    Daily Spend: <span className="font-bold text-indigo-700">{currencySymbol}{day.totalSpent}</span>
+                  </span>
+                </div>
+
+                {/* Activities Timeline */}
+                <div className="flex flex-col gap-4 relative pl-2">
+                  {day.activities.map((act: any, idx: number) => {
+                    if (act.isMeal) {
+                      return (
+                        <div key={idx} className="flex items-center gap-4 bg-amber-50 px-5 py-3.5 rounded-xl border border-amber-100">
+                          <Utensils className="h-5 w-5 text-amber-600 shrink-0" />
+                          <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <span className="text-base font-medium text-slate-800">{act.name}</span>
+                            <span className="text-sm font-semibold text-amber-700">
+                              Est: {currencySymbol}{act.expense}
+                            </span>
                           </div>
                         </div>
-                        <h5 className="text-xs font-extrabold text-zinc-200 mt-1">{rec.name}</h5>
-                        <p className="text-zinc-500 text-[10px] leading-relaxed mt-1">{rec.desc}</p>
+                      )
+                    }
+
+                    return (
+                      <div key={idx} className="group relative flex items-start gap-4">
+                        {/* Timeline dot */}
+                        <div className="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white absolute left-[-22px] top-2 shadow-sm" />
+                        
+                        <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-100 transition-all">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-slate-400" />
+                              <span className="text-sm font-semibold text-slate-600 font-mono">{act.time}</span>
+                              <span className="text-sm text-slate-500 bg-white px-2.5 py-0.5 rounded border border-slate-200">
+                                {act.city}
+                              </span>
+                            </div>
+                            <h4 className="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                              {act.name}
+                            </h4>
+                            {act.description && (
+                              <p className="text-sm text-slate-600 leading-relaxed">{act.description}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm">
+                            {act.rating && (
+                              <div className="flex items-center gap-1 text-amber-500">
+                                <Star className="h-4 w-4 fill-current" />
+                                <span className="font-bold text-slate-700">{act.rating}</span>
+                              </div>
+                            )}
+                            <span className="text-slate-600">
+                              Cost: <span className="font-semibold text-slate-900">
+                                {act.expense > 0 ? `${currencySymbol}${act.expense}` : 'Free'}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
-              </div>
+              </Card>
+            ))}
+          </div>
 
-              {/* ACTION CONTROLS */}
-              <div className="flex items-center gap-4 mt-4">
-                <Button
-                  onClick={() => setStep(1)}
-                  variant="ghost"
-                  className="flex-1 py-6 bg-zinc-900/30 border border-zinc-850 hover:bg-zinc-900/60 rounded-xl text-xs font-bold text-zinc-400"
-                >
-                  Regenerate
-                </Button>
-                <Button
-                  onClick={handleSaveTrip}
-                  className="flex-[2] py-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
-                >
-                  <Check className="h-4.5 w-4.5" />
-                  Save Trip
-                </Button>
-              </div>
-
+          {/* 💡 Smart Recommendations */}
+          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 rounded-3xl p-6 shadow-sm">
+            <h4 className="font-heading font-bold text-xl text-slate-900 flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-indigo-600" />
+              AI-Powered Recommendations
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {itinerary.smartRecommendations.map((rec: any, idx: number) => (
+                <Card key={idx} className="bg-white border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Hidden Gem</span>
+                    <div className="flex items-center gap-1 text-amber-500">
+                      <Star className="h-4 w-4 fill-current" />
+                      <span className="font-bold text-slate-700 text-sm">{rec.rating}</span>
+                    </div>
+                  </div>
+                  <h5 className="text-base font-bold text-slate-900 mb-2">{rec.name}</h5>
+                  <p className="text-sm text-slate-600 leading-relaxed">{rec.desc}</p>
+                </Card>
+              ))}
             </div>
-          )}
+          </Card>
+
+          {/* 🎯 Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+            <Button
+              onClick={() => { setStep(1); setLoading(false) }}
+              variant="outline"
+              className="flex-1 py-4 bg-white border-slate-300 hover:bg-slate-50 rounded-xl text-base font-semibold text-slate-700"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Regenerate Plan
+            </Button>
+            <Button
+              onClick={handleSaveTrip}
+              className="flex-[2] py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-emerald-200/50 hover:shadow-xl flex items-center justify-center gap-3"
+            >
+              <Check className="h-5 w-5" />
+              Save This Trip to My Dashboard ✨
+            </Button>
+          </div>
 
         </div>
       )}
