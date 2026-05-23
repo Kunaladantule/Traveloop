@@ -92,7 +92,7 @@ const DestinationCard = ({
 
     {/* Content Section */}
     <CardContent className="p-5">
-      <p className="text-base text-slate-600 leading-relaxed line-clamp-2">
+      <p className="text-base text-slate-850 leading-relaxed line-clamp-2">
         {dest.desc}
       </p>
       <div className="mt-4 flex items-center gap-1.5 text-indigo-600 font-semibold group-hover:gap-2 transition-all">
@@ -145,7 +145,7 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
         </h3>
         
         {/* Address */}
-        <div className="flex items-start gap-2 text-slate-600">
+        <div className="flex items-start gap-2 text-slate-800">
           <MapPin className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
           <span className="text-base leading-relaxed line-clamp-2">{place.address}</span>
         </div>
@@ -153,7 +153,7 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
         {/* Additional Info (if available) */}
         <div className="flex items-center gap-4 mt-auto pt-3 border-t border-slate-100">
           {place.priceLevel && (
-            <div className="flex items-center gap-1 text-sm text-slate-600">
+            <div className="flex items-center gap-1 text-sm text-slate-800">
               <DollarSign className="h-4 w-4 text-slate-400" />
               <span>{'💰'.repeat(place.priceLevel)}</span>
             </div>
@@ -174,7 +174,7 @@ const SearchSuggestions = ({
 }: { 
   suggestions: PlacePrediction[]; 
   onSelect: (desc: string) => void; 
-  suggestionsRef: React.RefObject<HTMLDivElement> 
+  suggestionsRef: React.RefObject<HTMLDivElement | null> 
 }) => (
   <div 
     ref={suggestionsRef} 
@@ -191,12 +191,12 @@ const SearchSuggestions = ({
         key={item.placeId}
         type="button"
         onClick={() => onSelect(item.description)}
-        className="w-full text-left px-5 py-4 hover:bg-indigo-50 text-slate-800 border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3"
+        className="w-full text-left px-5 py-4 hover:bg-indigo-50 text-slate-900 border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3"
       >
         <MapPin className="h-5 w-5 text-indigo-500 shrink-0" />
         <div className="flex flex-col">
           <span className="font-semibold text-slate-900 text-base">{item.mainText}</span>
-          {item.secondaryText && <span className="text-sm text-slate-500">{item.secondaryText}</span>}
+          {item.secondaryText && <span className="text-sm text-slate-750">{item.secondaryText}</span>}
         </div>
       </button>
     ))}
@@ -279,18 +279,20 @@ export default function DiscoverDestinationPage() {
       
       {/* 🌍 Header Section */}
       <section className="text-center py-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-semibold uppercase tracking-wide mb-5">
-          <Globe className="h-4 w-4" />
-          Explore the World
-        </div>
+        <div className="mx-auto max-w-4xl rounded-[2rem] border border-slate-200 bg-white/95 p-10 shadow-xl shadow-slate-200/50">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-semibold uppercase tracking-wide mb-5">
+            <Globe className="h-4 w-4" />
+            Explore the World
+          </div>
+          
+          <h1 className="font-heading font-bold text-4xl md:text-5xl text-slate-900 tracking-tight">
+            Discover Your Next Adventure ✈️
+          </h1>
         
-        <h1 className="font-heading font-bold text-4xl md:text-5xl text-slate-900 tracking-tight">
-          Discover Your Next Adventure ✈️
-        </h1>
-        
-        <p className="text-lg text-slate-600 mt-4 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-slate-900 mt-4 max-w-2xl mx-auto leading-relaxed font-medium">
           Search any city or country to find top attractions, hidden gems, and the best local dining experiences—all powered by Google Places.
         </p>
+        </div>
       </section>
 
       {/* 🔍 Search Bar */}
@@ -320,26 +322,13 @@ export default function DiscoverDestinationPage() {
       {loading && (
         <div className="flex flex-col justify-center items-center py-20 min-h-[40vh] gap-5">
           <div className="w-14 h-14 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <p className="text-lg text-slate-600 font-medium">Finding amazing places for you...</p>
+          <p className="text-lg text-slate-900 font-bold">Finding amazing places for you...</p>
         </div>
       )}
 
-      {/* 🏠 Initial State: Welcome + Popular Destinations */}
+      {/* 🏠 Initial State: Popular Destinations */}
       {!loading && !hasSearched && (
         <div className="flex flex-col gap-12">
-          
-          {/* Welcome Card */}
-          <Card className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 border-indigo-200 rounded-3xl p-8 md:p-10 text-center shadow-sm">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-100 flex items-center justify-center mb-5">
-              <Compass className="h-8 w-8 text-indigo-600" />
-            </div>
-            <h3 className="font-heading font-bold text-2xl text-slate-900 mb-3">
-              Where will you go next? 🗺️
-            </h3>
-            <p className="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
-              Enter any global city or country above to discover top tourist landmarks, off-the-beaten-path attractions, and culinary hotspots curated just for you.
-            </p>
-          </Card>
 
           {/* Popular Destinations Grid */}
           <section className="flex flex-col gap-6">
@@ -411,7 +400,7 @@ export default function DiscoverDestinationPage() {
             ) : (
               <Card className="bg-slate-50 border-slate-200 rounded-2xl p-8 text-center">
                 <Compass className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-lg text-slate-600 font-medium">
+                <p className="text-lg text-slate-900 font-semibold">
                   No attractions found for this location. Try searching for a major city!
                 </p>
               </Card>
@@ -436,7 +425,7 @@ export default function DiscoverDestinationPage() {
             ) : (
               <Card className="bg-slate-50 border-slate-200 rounded-2xl p-8 text-center">
                 <Utensils className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-lg text-slate-600 font-medium">
+                <p className="text-lg text-slate-900 font-semibold">
                   No dining spots found for this location. Try a popular tourist destination!
                 </p>
               </Card>

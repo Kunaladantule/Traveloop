@@ -132,10 +132,10 @@ const CategoryFilter = ({
         key={cat}
         onClick={() => onSelect(cat)}
         variant={selected === cat ? 'default' : 'outline'}
-        className={`rounded-xl px-5 py-2.5 text-base font-semibold transition-all ${
+        className={`rounded-xl px-5 py-2.5 text-base font-bold transition-all ${
           selected === cat
             ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-200/50'
-            : 'bg-white border-slate-300 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50'
+            : 'bg-white border-slate-400 text-slate-900 hover:border-indigo-500 hover:bg-indigo-50'
         }`}
       >
         {cat}
@@ -179,9 +179,9 @@ const ActivityCard = ({ activity }: { activity: typeof ACTIVITIES_MOCK[0] }) => 
       {/* Content Section */}
       <CardContent className="p-5 flex-1 flex flex-col gap-4">
         {/* Location */}
-        <div className="flex items-center gap-1.5 text-slate-600">
+        <div className="flex items-center gap-1.5 text-slate-900 font-semibold">
           <MapPin className="h-4 w-4 text-indigo-500 shrink-0" />
-          <span className="text-base font-medium">{activity.location}</span>
+          <span className="text-base font-semibold">{activity.location}</span>
         </div>
 
         {/* Title */}
@@ -190,26 +190,26 @@ const ActivityCard = ({ activity }: { activity: typeof ACTIVITIES_MOCK[0] }) => 
         </h3>
 
         {/* Description */}
-        <p className="text-base text-slate-600 leading-relaxed line-clamp-2">
+        <p className="text-base text-slate-850 leading-relaxed line-clamp-2 font-medium">
           {activity.description}
         </p>
 
         {/* Details Grid */}
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <Clock className="h-4 w-4 text-slate-400" />
+          <div className="flex items-center gap-1.5 text-sm text-slate-900 font-medium">
+            <Clock className="h-4 w-4 text-slate-650" />
             <span>{activity.duration}</span>
           </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <Users className="h-4 w-4 text-slate-400" />
+          <div className="flex items-center gap-1.5 text-sm text-slate-900 font-medium">
+            <Users className="h-4 w-4 text-slate-650" />
             <span>{activity.groupSize}</span>
           </div>
         </div>
 
         {/* Footer: Reviews + Price + CTA */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
-          <div className="flex items-center gap-1 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900">{activity.reviews.toLocaleString()}</span>
+          <div className="flex items-center gap-1 text-sm text-slate-850 font-medium">
+            <span className="font-bold text-slate-900">{activity.reviews.toLocaleString()}</span>
             <span>reviews</span>
           </div>
           <div className="flex items-center gap-3">
@@ -254,18 +254,20 @@ export default function ExploreActivitiesPage() {
       
       {/* 🧭 Header Section */}
       <section className="text-center py-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-semibold uppercase tracking-wide mb-5">
-          <Sparkles className="h-4 w-4" />
-          Curated Experiences
-        </div>
+        <div className="mx-auto max-w-4xl rounded-[2rem] border border-slate-200 bg-white/95 p-10 shadow-xl shadow-slate-200/50">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-semibold uppercase tracking-wide mb-5">
+            <Sparkles className="h-4 w-4" />
+            Curated Experiences
+          </div>
+          
+          <h1 className="font-heading font-bold text-4xl md:text-5xl text-slate-900 tracking-tight">
+            Explore Amazing Activities 🌍
+          </h1>
         
-        <h1 className="font-heading font-bold text-4xl md:text-5xl text-slate-900 tracking-tight">
-          Explore Amazing Activities 🌍
-        </h1>
-        
-        <p className="text-lg text-slate-600 mt-4 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-slate-900 mt-4 max-w-2xl mx-auto leading-relaxed font-medium">
           Discover handpicked attractions, cultural experiences, and adrenaline-pumping adventures from around the world—all verified and ready to book.
         </p>
+        </div>
       </section>
 
       {/* 🔍 Search & Filter Bar */}
@@ -280,12 +282,12 @@ export default function ExploreActivitiesPage() {
           
           {/* Search Input */}
           <div className="relative w-full lg:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
             <Input
               placeholder="Search activities or locations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-11 pr-4 bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-base py-3 h-12 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+              className="pl-11 pr-4 bg-white border-slate-350 rounded-xl text-slate-900 placeholder:text-slate-400 text-base py-3 h-12 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
             />
           </div>
         </div>
@@ -293,10 +295,10 @@ export default function ExploreActivitiesPage() {
 
       {/* 📊 Results Summary */}
       <div className="flex items-center justify-between">
-        <p className="text-base text-slate-600">
-          Showing <span className="font-semibold text-slate-900">{filtered.length}</span> activities
-          {filter !== 'All' && <span> in <span className="font-semibold text-indigo-700">{filter}</span></span>}
-          {search && <span> matching "<span className="font-semibold text-slate-900">{search}</span>"</span>}
+        <p className="text-base text-slate-900 font-semibold">
+          Showing <span className="font-bold text-slate-950">{filtered.length}</span> activities
+          {filter !== 'All' && <span> in <span className="font-bold text-indigo-750">{filter}</span></span>}
+          {search && <span> matching "<span className="font-bold text-slate-950">{search}</span>"</span>}
         </p>
         
         {/* Sort dropdown could go here */}
@@ -313,18 +315,18 @@ export default function ExploreActivitiesPage() {
         /* Empty State */
         <Card className="bg-slate-50 border-slate-200 rounded-2xl p-10 text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <Compass className="h-8 w-8 text-slate-400" />
+            <Compass className="h-8 w-8 text-slate-500" />
           </div>
           <h3 className="font-heading font-semibold text-xl text-slate-900 mb-2">
             No activities found
           </h3>
-          <p className="text-base text-slate-600 mb-4">
+          <p className="text-base text-slate-800 mb-4">
             Try adjusting your search or filters to discover more experiences.
           </p>
           <Button 
             variant="outline" 
             onClick={() => { setSearch(''); setFilter('All') }}
-            className="border-slate-300 text-slate-700 hover:bg-slate-50"
+            className="border-slate-400 text-slate-900 font-bold hover:bg-slate-50"
           >
             Clear Filters
           </Button>
@@ -332,15 +334,15 @@ export default function ExploreActivitiesPage() {
       )}
 
       {/* 📬 Newsletter CTA (Optional Enhancement) */}
-      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 rounded-2xl p-6 md:p-8 text-center">
-        <Sparkles className="h-8 w-8 text-indigo-600 mx-auto mb-3" />
-        <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">
+      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-250 rounded-2xl p-6 md:p-8 text-center">
+        <Sparkles className="h-8 w-8 text-indigo-650 mx-auto mb-3" />
+        <h3 className="font-heading font-bold text-xl text-slate-950 mb-2">
           Want personalized recommendations?
         </h3>
-        <p className="text-base text-slate-600 mb-4 max-w-md mx-auto">
+        <p className="text-base text-slate-900 mb-4 max-w-md mx-auto font-semibold">
           Tell us your travel preferences and we'll curate a custom list of activities just for you.
         </p>
-        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl">
+        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-xl">
           Get Personalized Picks
         </Button>
       </Card>

@@ -16,6 +16,8 @@ export interface GooglePlaceInfo {
   types: string[]
   isMeal?: boolean
   photoUrl?: string
+  priceLevel?: number
+  openNow?: boolean
 }
 
 export async function getGooglePlaceSuggestions(

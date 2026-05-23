@@ -1,18 +1,35 @@
+// components/ui/card.tsx
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
+// ─────────────────────────────────────────────────────────────
+// 🎴 Card Root (Light Theme + Size Variants)
+// ─────────────────────────────────────────────────────────────
 function Card({
   className,
   size = "default",
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & { size?: "sm" | "default" | "lg" }) {
   return (
     <div
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        // Base: white bg, rounded, subtle shadow
+        "bg-white rounded-2xl border border-slate-200 shadow-sm shadow-slate-200/50",
+        
+        // Layout: flex column, gap for content spacing
+        "flex flex-col",
+        
+        // Padding: comfortable spacing
+        "p-6",
+        "data-[size=sm]:p-4",
+        "data-[size=lg]:p-8",
+        
+        // Content gap
+        "gap-4",
+        "data-[size=sm]:gap-3",
+        
         className
       )}
       {...props}
@@ -20,12 +37,20 @@ function Card({
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 📋 Card Header
+// ─────────────────────────────────────────────────────────────
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-4 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-4 group-data-[size=sm]/card:[.border-b]:pb-3",
+        // Layout: flex column, gap for title/description
+        "flex flex-col gap-2",
+        
+        // Optional: border bottom for separation
+        "border-b border-slate-100 pb-4",
+        
         className
       )}
       {...props}
@@ -33,12 +58,20 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 🏷️ Card Title (Clash Display + Larger)
+// ─────────────────────────────────────────────────────────────
 function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
       className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
+        // Font: Clash Display for headings
+        "font-heading font-bold text-xl text-slate-900",
+        
+        // Line height for readability
+        "leading-snug",
+        
         className
       )}
       {...props}
@@ -46,22 +79,38 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 📝 Card Description (Inter + Readable)
+// ─────────────────────────────────────────────────────────────
 function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn(
+        // Font: Inter for body text
+        "font-sans text-base text-slate-600",
+        
+        // Line height for comfortable reading
+        "leading-relaxed",
+        
+        className
+      )}
       {...props}
     />
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// ⚙️ Card Action (For buttons/icons in header)
+// ─────────────────────────────────────────────────────────────
 function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-action"
       className={cn(
-        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        // Position: top-right of header
+        "self-start justify-self-end",
+        
         className
       )}
       {...props}
@@ -69,22 +118,40 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 📦 Card Content (Main body area)
+// ─────────────────────────────────────────────────────────────
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
-      className={cn("px-4 group-data-[size=sm]/card:px-3", className)}
+      className={cn(
+        // Layout: flex column, gap for items
+        "flex flex-col gap-4",
+        
+        className
+      )}
       {...props}
     />
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 👣 Card Footer (Actions, metadata)
+// ─────────────────────────────────────────────────────────────
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-xl border-t bg-muted/50 p-4 group-data-[size=sm]/card:p-3",
+        // Layout: flex row, centered items
+        "flex items-center justify-between",
+        
+        // Visual: top border, subtle bg
+        "border-t border-slate-100 pt-4 mt-2",
+        "bg-slate-50/50 rounded-b-2xl -mx-6 -mb-6 px-6 pb-6",
+        "data-[size=sm]/card:-mx-4 data-[size=sm]/card:-mb-4 data-[size=sm]/card:px-4 data-[size=sm]/card:pb-4",
+        
         className
       )}
       {...props}

@@ -100,14 +100,14 @@ const StatCard = ({
   <Card className="group hover:shadow-lg transition-all duration-200 border-slate-200 hover:border-slate-300">
     <CardContent className="p-5">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</span>
+        <span className="text-xs font-bold uppercase tracking-wide text-slate-950">{label}</span>
         <div className={`p-2 rounded-lg bg-slate-100 ${iconColor} group-hover:${hoverColor} transition-colors duration-200`}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
       <div className="mt-4 flex items-baseline gap-2">
         <span className="text-3xl font-bold text-slate-900 tracking-tight">{value}</span>
-        <span className="text-[11px] text-slate-500 font-medium">{sublabel}</span>
+        <span className="text-[11px] text-slate-800 font-semibold">{sublabel}</span>
       </div>
     </CardContent>
   </Card>
@@ -166,13 +166,13 @@ const TripCard = ({ trip }: { trip: Trip }) => {
           <h3 className="font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-1">
             {trip.title}
           </h3>
-          <p className="text-sm text-slate-600 line-clamp-2 mt-1">
+          <p className="text-sm text-slate-800 line-clamp-2 mt-1 font-medium">
             {trip.description || 'No description added yet.'}
           </p>
         </div>
 
         {/* Destination */}
-        <div className="flex items-center gap-1.5 text-sm text-slate-600">
+        <div className="flex items-center gap-1.5 text-sm text-slate-850 font-semibold">
           <MapPin className="h-4 w-4 text-indigo-500 shrink-0" />
           <span className="font-medium truncate">{destination}</span>
         </div>
@@ -180,8 +180,8 @@ const TripCard = ({ trip }: { trip: Trip }) => {
         {/* Budget Progress */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between text-xs">
-            <span className="text-slate-500">Budget: ${budget.toLocaleString()}</span>
-            <span className={`font-semibold ${isOverBudget ? 'text-red-600' : 'text-indigo-600'}`}>
+            <span className="text-slate-800 font-semibold">Budget: ${budget.toLocaleString()}</span>
+            <span className={`font-semibold ${isOverBudget ? 'text-red-650' : 'text-indigo-600'}`}>
               ${spent.toLocaleString()} ({pctSpent}%)
             </span>
           </div>
@@ -220,8 +220,9 @@ export default function DashboardPage() {
         return
       }
 
+      let parsedUser: any = null
       try {
-        const parsedUser = JSON.parse(userStr)
+        parsedUser = JSON.parse(userStr)
         setUser(parsedUser)
 
         // Try to fetch from API first
@@ -278,7 +279,7 @@ export default function DashboardPage() {
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-3 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-sm text-slate-500 font-medium">Loading your journeys...</span>
+          <span className="text-sm text-slate-900 font-bold">Loading your journeys...</span>
         </div>
       </div>
     )
@@ -289,40 +290,42 @@ export default function DashboardPage() {
       
       {/* 🎯 HERO SECTION */}
       <section className="text-center py-4">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold uppercase tracking-wide mb-5">
-          <Sparkles className="h-3.5 w-3.5" />
-          Intelligent Travel Assistant
-        </div>
-        
-        {/* Title */}
-        <h1 className="font-heading font-bold text-4xl md:text-5xl text-slate-900 tracking-tight">
-          Welcome back, {user?.name?.split(' ')[0] || 'Traveler'}! ✈️
-        </h1>
-        
-        {/* Subtitle */}
-        <p className="text-lg text-slate-600 mt-3 max-w-2xl mx-auto">
-          Plan smarter, travel better. Create personalized trips with AI-powered itineraries, budget tracking, and local insights.
-        </p>
+        <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white/95 p-8 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-semibold uppercase tracking-wide mb-5">
+            <Sparkles className="h-3.5 w-3.5" />
+            Intelligent Travel Assistant
+          </div>
+          
+          {/* Title */}
+          <h1 className="font-heading font-black text-4xl md:text-5xl text-slate-950 tracking-tight drop-shadow-[0_12px_24px_rgba(15,23,42,0.08)]">
+            Welcome back, {user?.name?.split(' ')[0] || 'Traveler'}! ✈️
+          </h1>
+          
+          {/* Subtitle */}
+          <p className="text-lg text-slate-800 mt-3 max-w-3xl mx-auto font-semibold">
+            Plan smarter, travel better. Create personalized trips with AI-powered itineraries, budget tracking, and local insights.
+          </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-          <Button 
-            onClick={() => window.location.href = '/dashboard/ai-planner'}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-200"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate with AI
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
+            <Button 
+              onClick={() => window.location.href = '/dashboard/ai-planner'}
+              className="min-w-[190px] px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-700 to-blue-700 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold shadow-xl shadow-indigo-200/40 hover:shadow-2xl transition-all duration-200"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate with AI
+            </Button>
 
-          <Button 
-            onClick={() => window.location.href = '/dashboard/trips'}
-            variant="outline"
-            className="px-6 py-3 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 font-semibold transition-all duration-200"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Manual Trip
-          </Button>
+            <Button 
+              onClick={() => window.location.href = '/dashboard/trips'}
+              variant="outline"
+              className="min-w-[190px] px-6 py-3 rounded-xl bg-white border border-slate-300 text-slate-950 shadow-sm hover:bg-slate-100 hover:border-slate-400 font-semibold transition-all duration-200"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Manual Trip
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -343,7 +346,7 @@ export default function DashboardPage() {
                 🤖 AI Trip Planner
               </h3>
               
-              <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+              <p className="text-slate-900 text-sm md:text-base leading-relaxed font-medium">
                 Enter your destination and travel style. We'll instantly craft a personalized itinerary with nearby attractions, activities, and real-time budget insights.
               </p>
             </div>
@@ -407,7 +410,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-xl font-heading font-bold text-slate-900">Your Journeys</h2>
-            <p className="text-sm text-slate-600 mt-1">Trips you've created or recently explored</p>
+            <p className="text-sm text-slate-900 mt-1 font-semibold">Trips you've created or recently explored</p>
           </div>
           
           <Button 
@@ -435,7 +438,7 @@ export default function DashboardPage() {
                 <Compass className="h-8 w-8 text-indigo-500" />
               </div>
               <h3 className="font-semibold text-slate-900 mb-2">No trips yet</h3>
-              <p className="text-sm text-slate-600 mb-4">Start planning your first adventure!</p>
+              <p className="text-sm text-slate-900 mb-4 font-semibold">Start planning your first adventure!</p>
               <Button 
                 onClick={() => window.location.href = '/dashboard/ai-planner'}
                 className="bg-indigo-600 hover:bg-indigo-500"

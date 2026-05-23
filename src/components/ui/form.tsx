@@ -1,3 +1,4 @@
+// components/ui/form.tsx
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -9,12 +10,14 @@ import {
   FormProvider,
   useFormContext,
 } from "react-hook-form"
-
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
 const Form = FormProvider
 
+// ─────────────────────────────────────────────────────────────
+// 🔗 Form Field Context
+// ─────────────────────────────────────────────────────────────
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
@@ -39,6 +42,9 @@ const FormField = <
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// 📦 Form Item Context + Component
+// ─────────────────────────────────────────────────────────────
 type FormItemContextValue = {
   id: string
 }
@@ -55,12 +61,19 @@ const FormItem = React.forwardRef<
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div ref={ref} className={cn("space-y-2", className)} {...props} />
+      <div 
+        ref={ref} 
+        className={cn("flex flex-col gap-2", className)} 
+        {...props} 
+      />
     </FormItemContext.Provider>
   )
 })
 FormItem.displayName = "FormItem"
 
+// ─────────────────────────────────────────────────────────────
+// 🔍 useFormField Hook (Error Handling)
+// ─────────────────────────────────────────────────────────────
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
@@ -84,6 +97,9 @@ const useFormField = () => {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// 🏷️ Form Label (Larger + Accessible)
+// ─────────────────────────────────────────────────────────────
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
@@ -93,7 +109,15 @@ const FormLabel = React.forwardRef<
   return (
     <Label
       ref={ref}
-      className={cn(error && "text-destructive", className)}
+      className={cn(
+        // Base: larger, readable text
+        "text-sm font-semibold text-slate-700",
+        
+        // Error state: red text
+        error && "text-red-600",
+        
+        className
+      )}
       htmlFor={formItemId}
       {...props}
     />
@@ -101,6 +125,9 @@ const FormLabel = React.forwardRef<
 })
 FormLabel.displayName = "FormLabel"
 
+// ─────────────────────────────────────────────────────────────
+// 🎛️ Form Control (Slot for inputs)
+// ─────────────────────────────────────────────────────────────
 const FormControl = React.forwardRef<
   React.ElementRef<typeof Slot>,
   React.ComponentPropsWithoutRef<typeof Slot>
@@ -123,6 +150,9 @@ const FormControl = React.forwardRef<
 })
 FormControl.displayName = "FormControl"
 
+// ─────────────────────────────────────────────────────────────
+// 📝 Form Description (Helper Text - Larger)
+// ─────────────────────────────────────────────────────────────
 const FormDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -133,13 +163,20 @@ const FormDescription = React.forwardRef<
     <p
       ref={ref}
       id={formDescriptionId}
-      className={cn("text-[0.8rem] text-muted-foreground", className)}
+      className={cn(
+        // Larger, readable helper text
+        "text-sm text-slate-500 leading-relaxed",
+        className
+      )}
       {...props}
     />
   )
 })
 FormDescription.displayName = "FormDescription"
 
+// ─────────────────────────────────────────────────────────────
+// ⚠️ Form Message (Error Text - Clear + Accessible)
+// ─────────────────────────────────────────────────────────────
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -155,7 +192,11 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn("text-[0.8rem] font-medium text-destructive", className)}
+      className={cn(
+        // Clear, readable error text
+        "text-sm font-medium text-red-600",
+        className
+      )}
       {...props}
     >
       {body}

@@ -35,9 +35,7 @@ export function GoogleMapWidget({
         act.lng !== undefined &&
         act.lat !== 0 &&
         act.lng !== 0
-    ) as Required<
-      Pick<Activity, 'name' | 'lat' | 'lng' | 'time' | 'isMeal'>
-    >[],
+    ) as (Activity & { lat: number; lng: number })[],
     [activities]
   )
 

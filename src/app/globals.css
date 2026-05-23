@@ -109,15 +109,23 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: var(--color-foreground);
+    background-color: var(--color-background);
   }
   
   body {
+    color: var(--color-foreground);
     @apply bg-background text-foreground min-h-screen;
+  }
+
+  a, button, input, textarea, select {
+    color: var(--color-foreground);
   }
   
   /* 🎯 Typography Scale */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-semibold tracking-tight text-foreground;
+    @apply font-heading font-semibold tracking-tight;
+    color: #0f172a;
     line-height: 1.2;
   }
   
@@ -129,7 +137,8 @@
   h6 { @apply text-base md:text-lg; }
   
   p {
-    @apply text-foreground/90 leading-relaxed;
+    color: #334155;
+    line-height: 1.75;
   }
   
   a {
@@ -299,6 +308,16 @@
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.85; }
+}
+
+/* Add to your globals.css for shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* ─────────────────────────────────────────────────────────────

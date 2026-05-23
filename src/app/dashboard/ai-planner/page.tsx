@@ -63,7 +63,7 @@ const StepBadge = ({ step, current, label }: { step: number; current: number; la
       }`}>
         {isActive && !isCurrent ? <Check className="h-4 w-4" /> : step}
       </span>
-      <span className={`text-base font-semibold ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+      <span className={`text-base font-semibold ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>
         {label}
       </span>
     </div>
@@ -84,11 +84,11 @@ const VibeButton = ({
       className={`py-4 px-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center min-h-[100px] ${
         selected 
           ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
-          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50'
+          : 'bg-white border-slate-300 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50/50'
       }`}
     >
-      <Icon className={`h-7 w-7 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`} />
-      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-700'}`}>
+      <Icon className={`h-7 w-7 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-500'}`} />
+      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-950'}`}>
         {vibe.label}
       </span>
     </button>
@@ -109,11 +109,11 @@ const CompanionButton = ({
       className={`py-4 px-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 text-center min-h-[110px] ${
         selected 
           ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
-          : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50'
+          : 'bg-white border-slate-300 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50/50'
       }`}
     >
-      <Icon className={`h-8 w-8 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-400'}`} />
-      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-700'}`}>
+      <Icon className={`h-8 w-8 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-700'}`} />
+      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-950'}`}>
         {item.label}
       </span>
     </button>
@@ -124,12 +124,12 @@ const StatCard = ({ label, value, sublabel, icon: Icon, color }: {
   label: string; value: string; sublabel: string; icon: React.ElementType; color: string
 }) => (
   <div className={`flex flex-col bg-white px-5 py-3.5 rounded-xl border border-slate-200 min-w-[120px] shadow-sm`}>
-    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+    <span className="text-xs font-semibold text-slate-750 uppercase tracking-wide flex items-center gap-1.5">
       <Icon className={`h-3.5 w-3.5 ${color}`} />
       {label}
     </span>
     <span className="text-lg font-bold text-slate-900 mt-1">{value}</span>
-    {sublabel && <span className="text-[11px] text-slate-400 mt-0.5">{sublabel}</span>}
+    {sublabel && <span className="text-[11px] text-slate-700 mt-0.5">{sublabel}</span>}
   </div>
 )
 
@@ -327,23 +327,23 @@ export default function AiPlannerPage() {
         </section>
 
         {/* 📍 Card 1: Destination & Budget */}
-        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative overflow-hidden">
+        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative z-20">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex flex-col gap-7 relative z-10">
             <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
                 <MapPin className="h-6 w-6 text-indigo-600" />
                 Where would you like to go?
               </h2>
-              <p className="text-lg text-slate-600 mt-2">
+              <p className="text-lg text-slate-800 mt-2">
                 Search for a city, country, or landmark. We'll autocomplete suggestions using Google Places.
               </p>
             </div>
 
             {/* Destination Search */}
             <div className="flex flex-col gap-3 relative">
-              <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Destination *</label>
+              <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Destination *</label>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
                 <Input 
@@ -371,10 +371,10 @@ export default function AiPlannerPage() {
                       onClick={() => handleGoogleSuggestionSelect(item.description)}
                       className="w-full text-left px-5 py-3.5 hover:bg-indigo-50 text-slate-800 border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3"
                     >
-                      <MapPin className="h-5 w-5 text-slate-400 shrink-0" />
+                      <MapPin className="h-5 w-5 text-slate-500 shrink-0" />
                       <div className="flex flex-col">
                         <span className="font-semibold text-slate-900 text-base">{item.mainText}</span>
-                        {item.secondaryText && <span className="text-sm text-slate-500">{item.secondaryText}</span>}
+                        {item.secondaryText && <span className="text-sm text-slate-600">{item.secondaryText}</span>}
                       </div>
                     </button>
                   ))}
@@ -386,7 +386,7 @@ export default function AiPlannerPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Number of Days */}
               <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Number of Days *</label>
+                <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Number of Days *</label>
                 <Input 
                   type="number"
                   min="1"
@@ -401,7 +401,7 @@ export default function AiPlannerPage() {
               {/* Budget */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Total Budget *</label>
+                  <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Total Budget *</label>
                   <span className="text-sm font-semibold text-indigo-700">Currency: {currencySymbol}</span>
                 </div>
                 
@@ -420,7 +420,7 @@ export default function AiPlannerPage() {
 
                 {/* Quick Budget Chips */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-slate-500">Quick select:</span>
+                  <span className="text-sm text-slate-900 font-semibold">Quick select:</span>
                   {['5000', '15000', '25000', '50000'].map((val) => (
                     <button
                       key={val}
@@ -429,7 +429,7 @@ export default function AiPlannerPage() {
                       className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
                         budget === val 
                           ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                          : 'bg-white border-slate-300 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50'
+                          : 'bg-white border-slate-350 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50'
                       }`}
                     >
                       {currencySymbol}{(parseInt(val) / 1000)}K
@@ -442,16 +442,16 @@ export default function AiPlannerPage() {
         </Card>
 
         {/* 💜 Card 2: Travel Mood */}
-        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative overflow-hidden">
+        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative z-10">
           <div className="absolute top-0 left-0 w-64 h-64 bg-purple-100/50 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex flex-col gap-7 relative z-10">
             <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
                 <Sparkles className="h-6 w-6 text-indigo-600" />
                 What's your travel vibe?
               </h2>
-              <p className="text-lg text-slate-600 mt-2">
+              <p className="text-lg text-slate-800 mt-2">
                 Choose the mood that best matches your dream trip.
               </p>
             </div>
@@ -473,11 +473,11 @@ export default function AiPlannerPage() {
         <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50">
           <div className="flex flex-col gap-7">
             <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
+              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
                 <Users className="h-6 w-6 text-indigo-600" />
                 Who are you traveling with?
               </h2>
-              <p className="text-lg text-slate-600 mt-2">
+              <p className="text-lg text-slate-800 mt-2">
                 This helps us tailor recommendations to your group.
               </p>
             </div>
@@ -505,7 +505,7 @@ export default function AiPlannerPage() {
             <Sparkles className="h-6 w-6 animate-pulse" />
             Generate My AI Itinerary ✨
           </Button>
-          <p className="text-center text-sm text-slate-500 mt-3">
+          <p className="text-center text-sm text-slate-700 mt-3 font-semibold">
             Takes about 30 seconds • Powered by Google Places + Gemini AI
           </p>
         </div>
@@ -525,12 +525,12 @@ export default function AiPlannerPage() {
         <Button
           variant="ghost"
           onClick={() => { setStep(1); setLoading(false) }}
-          className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-semibold"
+          className="text-slate-900 hover:text-slate-950 hover:bg-slate-100 font-semibold"
         >
           <ArrowLeft className="h-5 w-5 mr-2" />
           Edit Preferences
         </Button>
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-slate-700">
           <StepBadge step={1} current={2} label="" />
           <StepBadge step={2} current={2} label="" />
           <StepBadge step={3} current={2} label="" />
@@ -551,7 +551,7 @@ export default function AiPlannerPage() {
             <h3 className="font-heading font-bold text-2xl text-slate-900">
               Crafting your perfect itinerary... ✨
             </h3>
-            <p className="text-lg text-slate-600 leading-relaxed">
+            <p className="text-lg text-slate-700 leading-relaxed">
               Our AI is analyzing {destination}, finding top-rated attractions, calculating optimal routes, and building a personalized day-by-day plan just for you.
             </p>
           </div>
@@ -598,29 +598,29 @@ export default function AiPlannerPage() {
           {/* 📊 Budget & Insights Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">💵 Budget Tier</span>
+              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">💵 Budget Tier</span>
               <div className="mt-2 text-2xl font-bold text-indigo-700">{itinerary.category}</div>
-              <span className="text-sm text-slate-500 mt-1 block">Cost level per person</span>
+              <span className="text-sm text-slate-600 mt-1 block">Cost level per person</span>
             </Card>
             
             <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">💸 Daily Average</span>
+              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">💸 Daily Average</span>
               <div className="mt-2 text-2xl font-bold text-emerald-700">
                 {currencySymbol}{Math.round(itinerary.budget / itinerary.days).toLocaleString()}
               </div>
-              <span className="text-sm text-slate-500 mt-1 block">Per day allocation</span>
+              <span className="text-sm text-slate-600 mt-1 block">Per day allocation</span>
             </Card>
 
             <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">⚡ Trip Pace</span>
+              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">⚡ Trip Pace</span>
               <div className="mt-2 text-2xl font-bold text-violet-700">{itinerary.tripIntensity}</div>
-              <span className="text-sm text-slate-500 mt-1 block">Energy level</span>
+              <span className="text-sm text-slate-600 mt-1 block">Energy level</span>
             </Card>
 
             <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">🎯 Attractions</span>
+              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">🎯 Attractions</span>
               <div className="mt-2 text-2xl font-bold text-slate-900">{itinerary.attractionsCount}+</div>
-              <span className="text-sm text-slate-500 mt-1 block">Google Places verified</span>
+              <span className="text-sm text-slate-600 mt-1 block">Google Places verified</span>
             </Card>
           </div>
 
@@ -660,7 +660,7 @@ export default function AiPlannerPage() {
                     </span>
                     <span className="text-lg font-semibold text-slate-900">Day {day.day} Schedule</span>
                   </div>
-                  <span className="text-sm font-medium text-slate-600">
+                  <span className="text-sm font-medium text-slate-700">
                     Daily Spend: <span className="font-bold text-indigo-700">{currencySymbol}{day.totalSpent}</span>
                   </span>
                 </div>
@@ -690,9 +690,9 @@ export default function AiPlannerPage() {
                         <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-100 transition-all">
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-slate-400" />
-                              <span className="text-sm font-semibold text-slate-600 font-mono">{act.time}</span>
-                              <span className="text-sm text-slate-500 bg-white px-2.5 py-0.5 rounded border border-slate-200">
+                              <Clock className="h-4 w-4 text-slate-500" />
+                              <span className="text-sm font-semibold text-slate-700 font-mono">{act.time}</span>
+                              <span className="text-sm text-slate-700 bg-white px-2.5 py-0.5 rounded border border-slate-200">
                                 {act.city}
                               </span>
                             </div>
@@ -700,7 +700,7 @@ export default function AiPlannerPage() {
                               {act.name}
                             </h4>
                             {act.description && (
-                              <p className="text-sm text-slate-600 leading-relaxed">{act.description}</p>
+                              <p className="text-sm text-slate-700 leading-relaxed">{act.description}</p>
                             )}
                           </div>
 
@@ -708,10 +708,10 @@ export default function AiPlannerPage() {
                             {act.rating && (
                               <div className="flex items-center gap-1 text-amber-500">
                                 <Star className="h-4 w-4 fill-current" />
-                                <span className="font-bold text-slate-700">{act.rating}</span>
+                                <span className="font-bold text-slate-800">{act.rating}</span>
                               </div>
                             )}
-                            <span className="text-slate-600">
+                            <span className="text-slate-700">
                               Cost: <span className="font-semibold text-slate-900">
                                 {act.expense > 0 ? `${currencySymbol}${act.expense}` : 'Free'}
                               </span>
@@ -740,11 +740,11 @@ export default function AiPlannerPage() {
                     <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Hidden Gem</span>
                     <div className="flex items-center gap-1 text-amber-500">
                       <Star className="h-4 w-4 fill-current" />
-                      <span className="font-bold text-slate-700 text-sm">{rec.rating}</span>
+                      <span className="font-bold text-slate-800 text-sm">{rec.rating}</span>
                     </div>
                   </div>
                   <h5 className="text-base font-bold text-slate-900 mb-2">{rec.name}</h5>
-                  <p className="text-sm text-slate-600 leading-relaxed">{rec.desc}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{rec.desc}</p>
                 </Card>
               ))}
             </div>

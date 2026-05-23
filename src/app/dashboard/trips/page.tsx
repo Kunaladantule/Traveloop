@@ -72,7 +72,7 @@ const TabButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-5 py-3 text-base font-semibold rounded-xl transition-all ${
+    className={`flex items-center gap-2 px-5 py-3 text-base font-bold rounded-xl transition-all ${
       active 
         ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300 shadow-sm' 
         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-2 border-transparent'
@@ -90,7 +90,7 @@ const ExpenseRow = ({
 }) => (
   <div className="flex items-center justify-between gap-4 py-4 border-b border-slate-100 last:border-0">
     <div className="flex flex-col">
-      <span className="text-base font-semibold text-slate-900">{label}</span>
+      <span className="text-base font-bold text-slate-950">{label}</span>
       <span className="text-sm text-slate-500">{description}</span>
     </div>
     <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ const ExpenseRow = ({
         type="number"
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        className="w-32 h-10 text-base font-bold text-slate-900 border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+        className="w-32 h-10 text-base font-bold text-slate-955 border-slate-350 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-white"
       />
     </div>
   </div>
@@ -108,11 +108,11 @@ const ExpenseRow = ({
 const ActivityItem = ({ activity, currency }: { activity: any; currency: string }) => {
   if (activity.isMeal) {
     return (
-      <div className="flex items-center gap-4 bg-amber-50 px-5 py-4 rounded-xl border border-amber-100">
-        <Utensils className="h-5 w-5 text-amber-600 shrink-0" />
+      <div className="flex items-center gap-4 bg-amber-50 px-5 py-4 rounded-xl border border-amber-250 shadow-sm">
+        <Utensils className="h-5 w-5 text-amber-700 shrink-0" />
         <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <span className="text-base font-medium text-slate-800">{activity.name}</span>
-          <span className="text-sm font-semibold text-amber-700">
+          <span className="text-base font-semibold text-slate-900">{activity.name}</span>
+          <span className="text-sm font-bold text-amber-800">
             Est: {currency}{activity.expense}
           </span>
         </div>
@@ -125,13 +125,13 @@ const ActivityItem = ({ activity, currency }: { activity: any; currency: string 
       {/* Timeline dot */}
       <div className="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white absolute left-[-22px] top-3 shadow-sm" />
       
-      <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-100 transition-all">
+      <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-200 transition-all">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-slate-400" />
+            <Clock className="h-4 w-4 text-slate-600" />
             <span className="text-sm font-semibold text-slate-600 font-mono">{activity.time}</span>
             {activity.city && (
-              <span className="text-sm text-slate-500 bg-white px-2.5 py-0.5 rounded border border-slate-200">
+              <span className="text-sm font-semibold text-slate-905 bg-white px-2.5 py-0.5 rounded border border-slate-350">
                 {activity.city}
               </span>
             )}
@@ -149,7 +149,7 @@ const ActivityItem = ({ activity, currency }: { activity: any; currency: string 
             </div>
           )}
           <span className="text-slate-600">
-            Cost: <span className="font-semibold text-slate-900">
+            Cost: <span className="font-bold text-slate-950">
               {activity.expense > 0 ? `${currency}${activity.expense}` : 'Free'}
             </span>
           </span>
@@ -160,10 +160,10 @@ const ActivityItem = ({ activity, currency }: { activity: any; currency: string 
 }
 
 const HiddenGemCard = ({ gem }: { gem: any }) => (
-  <Card className="group overflow-hidden border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 bg-white">
+  <Card className="group overflow-hidden border-slate-350 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 bg-white">
     <CardContent className="p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold uppercase tracking-wide">
+        <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-705 text-xs font-bold uppercase tracking-wide">
           {gem.type || 'Hidden Gem'}
         </span>
         <div className="flex items-center gap-1 text-amber-500">
@@ -178,7 +178,7 @@ const HiddenGemCard = ({ gem }: { gem: any }) => (
       
       <p className="text-base text-slate-600 leading-relaxed">{gem.desc}</p>
       
-      <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 mt-auto">
+      <button className="text-sm font-bold text-indigo-650 hover:text-indigo-700 flex items-center gap-1 mt-auto">
         View Details
         <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </button>
@@ -187,11 +187,11 @@ const HiddenGemCard = ({ gem }: { gem: any }) => (
 )
 
 const NoteItem = ({ note, onDelete }: { note: { id: string; content: string }; onDelete: (id: string) => void }) => (
-  <div className="flex items-start justify-between gap-4 p-5 rounded-xl border border-slate-200 bg-white hover:border-indigo-200 transition-colors">
-    <p className="text-base text-slate-700 leading-relaxed">{note.content}</p>
+  <div className="flex items-start justify-between gap-4 p-5 rounded-xl border border-slate-300 bg-white hover:border-indigo-200 transition-colors">
+    <p className="text-base text-slate-950 leading-relaxed font-medium">{note.content}</p>
     <button 
       onClick={() => onDelete(note.id)}
-      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+      className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
       aria-label="Delete note"
     >
       <Trash2 className="h-4 w-4" />
@@ -227,7 +227,7 @@ const TripCard = ({
         {/* Delete Button */}
         <button 
           onClick={onDelete}
-          className="absolute top-3 right-3 p-2 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200 text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all z-10"
+          className="absolute top-3 right-3 p-2 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-300 text-slate-650 hover:text-red-600 hover:bg-red-50 transition-all z-10"
           aria-label="Delete trip"
         >
           <Trash2 className="h-4 w-4" />
@@ -254,8 +254,8 @@ const TripCard = ({
             <span className="truncate max-w-[150px]">{destination}</span>
           </div>
           {trip.totalBudget && (
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-              <DollarSign className="h-4 w-4 text-emerald-500 shrink-0" />
+            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-950">
+              <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
               <span>{currency}{trip.totalBudget.toLocaleString()}</span>
             </div>
           )}
@@ -287,6 +287,30 @@ function TripsPageInner() {
   // Notes state
   const [notes, setNotes] = useState<Array<{ id: string; content: string }>>([])
   const [newNoteText, setNewNoteText] = useState('')
+
+  const handleCreateManualTrip = () => {
+    const mockTitle = prompt('Enter Trip Destination:', 'Paris')
+    if (!mockTitle) return
+    const tempId = `man_trip_${Date.now()}`
+    const newTrip: Trip = {
+      id: tempId,
+      title: `Trip to ${mockTitle}`,
+      description: 'Custom travel plan',
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + 5*24*60*60*1000).toISOString(),
+      totalBudget: 8000,
+      coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=600',
+      stops: [{ id: 's_1', cityName: mockTitle, country: 'Unknown' }],
+      expenses: [
+        { id: 'e_1', amount: 1500, category: 'Transport' },
+        { id: 'e_2', amount: 3000, category: 'Hotel' }
+      ]
+    }
+    const updated = [newTrip, ...trips]
+    setTrips(updated)
+    if (user) localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updated))
+    window.location.href = `/dashboard/trips?id=${tempId}`
+  }
 
   // Load User & Trips
   useEffect(() => {
@@ -425,7 +449,7 @@ function TripsPageInner() {
       <div className="flex justify-center items-center py-24 min-h-[50vh]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-base text-slate-600 font-medium">Loading your trips...</span>
+          <span className="text-base text-slate-900 font-bold">Loading your trips...</span>
         </div>
       </div>
     )
@@ -469,7 +493,7 @@ function TripsPageInner() {
           <Button
             variant="ghost"
             onClick={() => window.location.href = '/dashboard/trips'}
-            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-semibold"
+            className="text-slate-900 hover:text-slate-950 hover:bg-slate-100 font-bold"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Back to Trips
@@ -479,7 +503,7 @@ function TripsPageInner() {
             <Button
               variant="outline"
               onClick={() => alert(`Share link: http://traveloop.ai/share/${activeTrip.id}`)}
-              className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold"
+              className="border-slate-400 text-slate-900 hover:bg-slate-50 font-bold"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share
@@ -564,7 +588,7 @@ function TripsPageInner() {
             ───────────────────────────────────────────────────── */}
         {activeTab === 'itinerary' && (
           <div className="flex flex-col gap-8">
-            {activeTrip.itineraryDays?.length > 0 ? (
+            {activeTrip.itineraryDays && activeTrip.itineraryDays.length > 0 ? (
               <div className="flex flex-col gap-6">
                 {activeTrip.itineraryDays.map((day: any) => (
                   <Card key={day.day} className="border-slate-200 shadow-sm">
@@ -577,7 +601,7 @@ function TripsPageInner() {
                           </span>
                           <span className="text-lg font-semibold text-slate-900">Day {day.day} Schedule</span>
                         </div>
-                        <span className="text-sm font-medium text-slate-600">
+                        <span className="text-sm font-bold text-slate-850">
                           Daily Spend: <span className="font-bold text-indigo-700">{currencySymbol}{day.totalSpent}</span>
                         </span>
                       </div>
@@ -596,7 +620,7 @@ function TripsPageInner() {
               <Card className="bg-slate-50 border-slate-200 rounded-2xl p-10 text-center">
                 <Compass className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="font-heading font-semibold text-xl text-slate-900 mb-2">No itinerary yet</h3>
-                <p className="text-base text-slate-600 mb-4">Add activities to build your day-by-day travel plan.</p>
+                <p className="text-base text-slate-850 mb-4 font-semibold">Add activities to build your day-by-day travel plan.</p>
                 <Button className="bg-indigo-600 hover:bg-indigo-500">Add First Activity</Button>
               </Card>
             )}
@@ -620,7 +644,7 @@ function TripsPageInner() {
                           </div>
                         </div>
                         <h5 className="text-base font-bold text-slate-900 mb-2">{gem.name}</h5>
-                        <p className="text-sm text-slate-600 leading-relaxed">{gem.desc}</p>
+                        <p className="text-sm text-slate-850 leading-relaxed font-medium">{gem.desc}</p>
                       </Card>
                     ))}
                   </div>
@@ -665,7 +689,7 @@ function TripsPageInner() {
                       type="number"
                       value={totalBudget}
                       onChange={(e) => handleBudgetLimitChange(parseFloat(e.target.value) || 0)}
-                      className="h-8 w-32 text-xl font-bold text-slate-900 border-0 border-b border-dashed border-slate-300 focus:border-indigo-500 focus:ring-0 p-0 bg-transparent"
+                      className="h-8 w-32 text-xl font-bold text-slate-950 border-0 border-b border-dashed border-slate-350 focus:border-indigo-500 focus:ring-0 p-0 bg-transparent"
                     />
                   </div>
                   <span className="text-xs text-slate-500 mt-2 block">Editable budget limit</span>
@@ -721,7 +745,7 @@ function TripsPageInner() {
 
                   {/* Total Summary */}
                   <div className="mt-6 p-4 bg-slate-50 rounded-xl flex items-center justify-between">
-                    <span className="text-base font-semibold text-slate-700">Total Calculated:</span>
+                    <span className="text-base font-bold text-slate-900">Total Calculated:</span>
                     <span className="text-xl font-bold text-indigo-700">{currencySymbol}{totalSpent.toLocaleString()}</span>
                   </div>
                 </CardContent>
@@ -731,7 +755,7 @@ function TripsPageInner() {
               <Card className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="p-6">
                   <h3 className="font-heading font-bold text-xl text-slate-900 mb-1">Budget Distribution</h3>
-                  <p className="text-base text-slate-600 mb-6">Visual breakdown of your spending categories.</p>
+                  <p className="text-base text-slate-850 mb-6 font-medium">Visual breakdown of your spending categories.</p>
                   
                   <div className="h-64 flex items-center justify-center">
                     {chartData.length > 0 ? (
@@ -754,7 +778,7 @@ function TripsPageInner() {
                           <Tooltip 
                             contentStyle={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                             itemStyle={{ fontSize: '14px', color: '#1e293b' }}
-                            formatter={(value: number) => `${currencySymbol}${value.toLocaleString()}`}
+                            formatter={(value: any) => `${currencySymbol}${value?.toLocaleString() || ''}`}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -771,7 +795,7 @@ function TripsPageInner() {
                     {chartData.map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-slate-600">{item.name}</span>
+                        <span className="text-sm text-slate-805 font-bold">{item.name}</span>
                       </div>
                     ))}
                   </div>
@@ -792,7 +816,7 @@ function TripsPageInner() {
                 <Coffee className="h-6 w-6 text-indigo-600" />
                 Hidden Gems in {activeTrip.stops?.[0]?.cityName || 'Your Destination'}
               </h2>
-              <p className="text-base text-slate-600 mt-2">Off-the-beaten-path recommendations from locals and travelers.</p>
+              <p className="text-base text-slate-850 mt-2 font-medium">Off-the-beaten-path recommendations from locals and travelers.</p>
             </div>
 
             {hiddenGemsList.length > 0 ? (
@@ -831,7 +855,7 @@ function TripsPageInner() {
                 value={newNoteText}
                 onChange={(e) => setNewNoteText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                className="flex-1 text-base py-3 h-12 border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className="flex-1 text-base py-3 h-12 border-slate-350 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-white"
               />
               <Button onClick={handleAddNote} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6">
                 Add
@@ -871,29 +895,7 @@ function TripsPageInner() {
           <p className="text-lg text-slate-600 mt-2">Manage your travel itineraries, AI-generated plans, and custom adventures.</p>
         </div>
         <Button 
-          onClick={() => {
-            const mockTitle = prompt('Enter Trip Destination:', 'Paris')
-            if (!mockTitle) return
-            const tempId = `man_trip_${Date.now()}`
-            const newTrip: Trip = {
-              id: tempId,
-              title: `Trip to ${mockTitle}`,
-              description: 'Custom travel plan',
-              startDate: new Date().toISOString(),
-              endDate: new Date(Date.now() + 5*24*60*60*1000).toISOString(),
-              totalBudget: 8000,
-              coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=600',
-              stops: [{ id: 's_1', cityName: mockTitle, country: 'Unknown' }],
-              expenses: [
-                { id: 'e_1', amount: 1500, category: 'Transport' },
-                { id: 'e_2', amount: 3000, category: 'Hotel' }
-              ]
-            }
-            const updated = [newTrip, ...trips]
-            setTrips(updated)
-            if (user) localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updated))
-            window.location.href = `/dashboard/trips?id=${tempId}`
-          }}
+          onClick={handleCreateManualTrip}
           className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl shadow-md shadow-indigo-200/50"
         >
           <Plus className="h-5 w-5 mr-2" />
@@ -916,7 +918,7 @@ function TripsPageInner() {
               <Sparkles className="h-5 w-5 mr-2" />
               Use AI Planner
             </Button>
-            <Button variant="outline" onClick={() => document.querySelector('button[onclick*="Create New Trip"]')?.click()} className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold px-6 py-3">
+            <Button variant="outline" onClick={handleCreateManualTrip} className="border-slate-400 text-slate-900 hover:bg-slate-50 font-bold px-6 py-3">
               Create Manual Trip
             </Button>
           </div>
@@ -944,7 +946,7 @@ function TripsPageInner() {
           <div>
             <h4 className="font-semibold text-slate-900 mb-1">Pro Tip</h4>
             <p className="text-base text-slate-600">
-              Use the <span className="font-semibold text-indigo-700">Budget</span> tab to adjust spending categories in real-time, and the <span className="font-semibold text-indigo-700">Notes</span> tab to keep important travel details handy!
+              Use the <span className="font-bold text-indigo-750">Budget</span> tab to adjust spending categories in real-time, and the <span className="font-bold text-indigo-750">Notes</span> tab to keep important travel details handy!
             </p>
           </div>
         </div>
@@ -964,7 +966,7 @@ export default function MyTripsPage() {
       <div className="flex justify-center items-center py-24 min-h-[50vh]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-base text-slate-600 font-medium">Loading trips...</span>
+          <span className="text-base text-slate-900 font-bold">Loading trips...</span>
         </div>
       </div>
     }>
