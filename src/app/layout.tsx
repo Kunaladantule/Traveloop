@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from '@/components/ui/sonner';
@@ -14,8 +14,8 @@ const inter = Inter({
   display: "swap", // Improves perceived performance
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
   display: "swap",
 });
@@ -61,17 +61,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+      className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
       // 💡 Tip: Add 'dark' class here or via script to enable dark mode
       // Example: className={`... ${theme === 'dark' ? 'dark' : ''}`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         {/* 📊 Top Progress Loader */}
         <NextTopLoader 
-          color="#6366f1" // Indigo-500 - matches light theme primary
+          color="#6C63FF"
           showSpinner={false} 
           height={3} 
-          shadow="0 0 10px rgba(99, 102, 241, 0.3)" 
+          shadow="0 0 10px rgba(108,99,255,0.4)" 
           crawlSpeed={200}
           easing="ease"
         />
@@ -85,17 +85,12 @@ export default function RootLayout({
           toastOptions={{
             duration: 4000,
             style: {
-              background: 'white',
-              color: '#1e293b', // slate-800
-              border: '1px solid #e2e8f0', // slate-200
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              background: '#EAEFF5',
+              color: '#1e293b',
+              border: 'none',
+              boxShadow: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+              borderRadius: '20px',
             },
-            classNames: {
-              success: 'border-l-4 border-l-emerald-500',
-              error: 'border-l-4 border-l-red-500',
-              warning: 'border-l-4 border-l-amber-500',
-              info: 'border-l-4 border-l-indigo-500',
-            }
           }}
         />
       </body>

@@ -1,89 +1,100 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { 
-  Mail, Lock, User, Phone, Globe, MapPin, 
-  ArrowRight, Compass, Check, Search, AlertCircle 
+import {
+  Mail, Lock, User, Phone, Globe, MapPin,
+  ArrowRight, Compass, Check, Search, AlertCircle
 } from 'lucide-react'
 import { countriesData } from '@/lib/countries'
 import { createProfile, getUserByEmail } from '@/app/actions/auth'
 
 // ─────────────────────────────────────────────────────────────
-// 🎨 Light Theme Design Tokens
+// 🎴 Neumorphic Card
 // ─────────────────────────────────────────────────────────────
-const THEME = {
-  colors: {
-    primary: 'from-indigo-600 to-purple-600',
-    primaryHover: 'from-indigo-500 to-purple-500',
-    background: 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50',
-    cardBg: 'bg-white/80',
-    inputBg: 'bg-white',
-    border: 'border-slate-200',
-    borderFocus: 'border-indigo-400',
-    text: {
-      primary: 'text-slate-900',
-      secondary: 'text-slate-700',
-      muted: 'text-slate-500',
-      label: 'text-slate-800',
-      placeholder: 'text-slate-400'
-    },
-    shadow: 'shadow-xl shadow-slate-200/50',
-    shadowHover: 'shadow-2xl shadow-indigo-200/60'
-  },
-  spacing: {
-    card: 'p-6 md:p-8',
-    input: 'py-3 px-4',
-    gap: 'gap-4'
-  },
-  radius: {
-    card: 'rounded-2xl',
-    input: 'rounded-xl'
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// 🧩 Reusable UI Components (Light Theme Optimized)
-// ─────────────────────────────────────────────────────────────
-
-const GlassCard = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <div className={`relative ${THEME.colors.cardBg} ${THEME.colors.border} border ${THEME.radius.card} ${THEME.spacing.card} backdrop-blur-lg ${THEME.colors.shadow} ${className}`}>
-    {/* Subtle top gradient accent */}
-    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-2xl" />
+const NeuCard = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div
+    className={`relative ${className}`}
+    style={{
+      background: '#EAEFF5',
+      borderRadius: 32,
+      boxShadow: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+      border: 'none',
+      padding: '2.25rem',
+    }}
+  >
     {children}
   </div>
 )
 
-const InputField = ({ 
-  label, icon: Icon, type = 'text', value, onChange, placeholder, required = false, error, ...props 
+// ─────────────────────────────────────────────────────────────
+// 📝 Input Field
+// ─────────────────────────────────────────────────────────────
+const InputField = ({
+  label, icon: Icon, type = 'text', value, onChange, placeholder,
+  required = false, error, ...props
 }: {
-  label: string, icon: React.ElementType, type?: string, value: string, 
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, placeholder: string, 
-  required?: boolean, error?: string, [key: string]: any
+  label: string; icon: React.ElementType; type?: string; value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string; required?: boolean; error?: string; [key: string]: any
 }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-xs font-semibold uppercase tracking-wide text-slate-700">{label}</label>
-    <div className="relative">
-      <Icon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <label style={{
+      fontSize: 10, fontWeight: 800, letterSpacing: '0.15em',
+      textTransform: 'uppercase', color: '#64748B', marginLeft: 4
+    }}>
+      {label}
+    </label>
+    <div style={{ position: 'relative' }}>
+      <Icon style={{
+        position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+        width: 20, height: 20, color: '#6C63FF', pointerEvents: 'none'
+      }} />
       <input
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={`w-full ${THEME.colors.inputBg} ${THEME.colors.border} ${THEME.radius.input} ${THEME.spacing.input} pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all ${error ? 'border-red-400 focus:ring-red-500/20' : ''}`}
+        style={{
+          width: '100%',
+          paddingLeft: 50, paddingRight: 16, paddingTop: 14, paddingBottom: 14,
+          background: '#EAEFF5',
+          borderRadius: 14,
+          border: 'none',
+          outline: 'none',
+          fontSize: '0.95rem',
+          color: '#1E293B',
+          fontFamily: 'Inter, sans-serif',
+          boxShadow: error
+            ? 'inset 3px 3px 8px rgba(239,68,68,.2), inset -3px -3px 8px rgba(255,255,255,.85)'
+            : 'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+          transition: 'box-shadow .25s ease',
+        }}
+        onFocus={e => {
+          e.currentTarget.style.boxShadow =
+            'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85), 0 0 0 2px rgba(108,99,255,.25)'
+        }}
+        onBlur={e => {
+          e.currentTarget.style.boxShadow =
+            'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)'
+        }}
         {...props}
       />
     </div>
-    {error && <p className="text-xs text-red-500 mt-0.5 ml-1">{error}</p>}
+    {error && <p style={{ fontSize: 12, color: '#EF4444', marginLeft: 4 }}>{error}</p>}
   </div>
 )
 
-const SelectField = ({ 
-  label, icon: Icon, value, options, onSelect, placeholder, disabled = false, searchPlaceholder = 'Search...', error 
+// ─────────────────────────────────────────────────────────────
+// 🔽 Select Field
+// ─────────────────────────────────────────────────────────────
+const SelectField = ({
+  label, icon: Icon, value, options, onSelect, placeholder,
+  disabled = false, searchPlaceholder = 'Search...', error
 }: {
-  label: string, icon: React.ElementType, value: string, options: string[], 
-  onSelect: (val: string) => void, placeholder: string, disabled?: boolean, 
-  searchPlaceholder?: string, error?: string
+  label: string; icon: React.ElementType; value: string; options: string[];
+  onSelect: (val: string) => void; placeholder: string; disabled?: boolean;
+  searchPlaceholder?: string; error?: string
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -100,52 +111,82 @@ const SelectField = ({
   const filtered = options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="flex flex-col gap-1.5 relative" ref={ref}>
-      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">{label}</label>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }} ref={ref}>
+      <label style={{
+        fontSize: 10, fontWeight: 800, letterSpacing: '0.15em',
+        textTransform: 'uppercase', color: '#64748B', marginLeft: 4
+      }}>
+        {label}
+      </label>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex justify-between items-center ${THEME.colors.inputBg} ${THEME.colors.border} ${THEME.radius.input} ${THEME.spacing.input} pl-10 pr-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'cursor-pointer hover:bg-slate-50'} ${error ? 'border-red-400' : ''}`}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: '#EAEFF5', borderRadius: 14, border: 'none', outline: 'none',
+          padding: '14px 16px 14px 16px', cursor: disabled ? 'not-allowed' : 'pointer',
+          opacity: disabled ? .55 : 1, color: '#1E293B', fontSize: '0.875rem', fontWeight: 500,
+          fontFamily: 'Inter, sans-serif',
+          boxShadow: error
+            ? 'inset 3px 3px 8px rgba(239,68,68,.2), inset -3px -3px 8px rgba(255,255,255,.85)'
+            : 'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+          transition: 'box-shadow .25s ease',
+        }}
       >
-        <span className="flex items-center gap-2 truncate text-slate-900">
-          <Icon className="h-4 w-4 text-slate-400 shrink-0" />
-          {value || <span className="text-slate-400">{placeholder}</span>}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Icon style={{ width: 16, height: 16, color: '#6C63FF', flexShrink: 0 }} />
+          <span style={{ color: value ? '#1E293B' : '#94A3B8' }}>{value || placeholder}</span>
         </span>
-        <span className={`transform transition-transform text-slate-400 ${isOpen ? 'rotate-180' : ''}`}>▼</span>
+        <span style={{ color: '#94A3B8', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease', fontSize: 12 }}>▼</span>
       </button>
-      {error && <p className="text-xs text-red-500 mt-0.5 ml-1">{error}</p>}
+      {error && <p style={{ fontSize: 12, color: '#EF4444', marginLeft: 4 }}>{error}</p>}
 
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2">
-          <div className="p-2 border-b border-slate-100">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 10px)', left: 0, right: 0, zIndex: 50,
+          background: '#EAEFF5', borderRadius: 20, border: 'none',
+          boxShadow: '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
+          overflow: 'hidden',
+        }}>
+          <div style={{ padding: '10px 10px 6px' }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: '#94A3B8' }} />
               <input
-                type="text"
-                autoFocus
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                type="text" autoFocus value={search}
+                onChange={e => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                style={{
+                  width: '100%', paddingLeft: 36, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
+                  background: '#EAEFF5', borderRadius: 12, border: 'none', outline: 'none', fontSize: '0.8rem', color: '#1E293B',
+                  boxShadow: 'inset 2px 2px 5px rgba(163,177,198,.3), inset -2px -2px 5px rgba(255,255,255,.85)',
+                  fontFamily: 'Inter, sans-serif',
+                }}
               />
             </div>
           </div>
-          <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
+          <div style={{ maxHeight: 192, overflowY: 'auto' }} className="custom-scrollbar">
             {filtered.length > 0 ? (
-              filtered.map((opt) => (
+              filtered.map(opt => (
                 <button
-                  key={opt}
-                  type="button"
+                  key={opt} type="button"
                   onClick={() => { onSelect(opt); setIsOpen(false); setSearch('') }}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${value === opt ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-700 hover:bg-slate-50'}`}
+                  style={{
+                    width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '10px 16px', textAlign: 'left', background: 'none', border: 'none',
+                    cursor: 'pointer', color: value === opt ? '#6C63FF' : '#334155',
+                    fontWeight: value === opt ? 700 : 500, fontSize: '0.85rem',
+                    transition: 'background .15s ease', fontFamily: 'Inter, sans-serif',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(108,99,255,.07)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                 >
                   {opt}
-                  {value === opt && <Check className="h-4 w-4 text-indigo-600" />}
+                  {value === opt && <Check style={{ width: 14, height: 14, color: '#6C63FF' }} />}
                 </button>
               ))
             ) : (
-              <p className="text-xs text-slate-500 text-center py-3">No results found</p>
+              <p style={{ textAlign: 'center', padding: '12px', color: '#94A3B8', fontSize: 12, fontFamily: 'Inter, sans-serif' }}>No results</p>
             )}
           </div>
         </div>
@@ -154,38 +195,46 @@ const SelectField = ({
   )
 }
 
-const PrimaryButton = ({ children, onClick, type = 'button', loading = false, className = '' }: {
-  children: React.ReactNode, onClick?: () => void, type?: 'button' | 'submit', loading?: boolean, className?: string
+// ─────────────────────────────────────────────────────────────
+// 🔘 Primary Button
+// ─────────────────────────────────────────────────────────────
+const PrimaryButton = ({ children, onClick, type = 'button', loading = false }: {
+  children: React.ReactNode; onClick?: () => void;
+  type?: 'button' | 'submit'; loading?: boolean
 }) => (
   <button
     type={type}
     onClick={onClick}
     disabled={loading}
-    className={`group relative w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r ${THEME.colors.primary} text-white font-semibold text-sm ${THEME.radius.input} ${THEME.colors.shadow} hover:${THEME.colors.shadowHover} hover:${THEME.colors.primaryHover} transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed ${className}`}
+    className="neu-btn-primary"
+    style={{ width: '100%', padding: '1rem 1.75rem', marginTop: 4 }}
   >
     {loading ? (
-      <span className="flex items-center gap-2">
-        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          width: 18, height: 18, border: '2px solid rgba(255,255,255,.3)',
+          borderTop: '2px solid white', borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+        }} />
         Processing...
       </span>
     ) : (
       <>
         {children}
-        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight style={{ width: 18, height: 18, marginLeft: 4 }} />
       </>
     )}
   </button>
 )
 
 // ─────────────────────────────────────────────────────────────
-// 🚀 Main Page Component (Light Theme)
+// 🚀 Main Auth Page
 // ─────────────────────────────────────────────────────────────
-
 export default function AuthPage() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  
+
   const [form, setForm] = useState({
     name: '', contact: '', email: '', password: '', country: '', city: ''
   })
@@ -193,272 +242,179 @@ export default function AuthPage() {
   const selectedCountry = countriesData.find(c => c.name === form.country)
   const availableCities = selectedCountry?.cities || []
   const allCountries = countriesData.map(c => c.name)
-  const allCities = availableCities
 
   const updateForm = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
-    if (errors[field]) {
-      setErrors(prev => { const newErrs = { ...prev }; delete newErrs[field]; return newErrs })
-    }
+    if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n })
   }
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-    
+    const errs: Record<string, string> = {}
     if (authMode === 'register') {
-      if (!form.name.trim()) newErrors.name = 'Name is required'
-      if (!form.contact.trim()) newErrors.contact = 'Contact is required'
-      if (!form.email.trim()) {
-        newErrors.email = 'Email is required'
-      } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-        newErrors.email = 'Please enter a valid email'
-      }
-      if (!form.country) newErrors.country = 'Select a country'
-      if (!form.city) newErrors.city = 'Select a city'
-      if (!form.password) {
-        newErrors.password = 'Password is required'
-      } else if (form.password.length < 6) {
-        newErrors.password = 'Min. 6 characters'
-      }
+      if (!form.name.trim()) errs.name = 'Name is required'
+      if (!form.contact.trim()) errs.contact = 'Contact is required'
+      if (!form.email.trim()) errs.email = 'Email is required'
+      else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email'
+      if (!form.country) errs.country = 'Select a country'
+      if (!form.city) errs.city = 'Select a city'
+      if (!form.password) errs.password = 'Password is required'
+      else if (form.password.length < 6) errs.password = 'Min. 6 characters'
     } else {
-      if (!form.email.trim()) newErrors.email = 'Email is required'
-      if (!form.password) newErrors.password = 'Password is required'
+      if (!form.email.trim()) errs.email = 'Email is required'
+      if (!form.password) errs.password = 'Password is required'
     }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(errs)
+    return Object.keys(errs).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validateForm()) return
-
     setIsLoading(true)
-    
     try {
       if (authMode === 'login') {
         const res = await getUserByEmail(form.email)
-        if (res.success && res.user) {
-          localStorage.setItem('traveloop_user', JSON.stringify(res.user))
-          window.location.href = '/dashboard'
-          return
-        }
+        if (res.success && res.user) { localStorage.setItem('traveloop_user', JSON.stringify(res.user)); window.location.href = '/dashboard'; return }
         const mockUser = { id: `mock_${Date.now()}`, name: form.email.split('@')[0], email: form.email }
         localStorage.setItem('traveloop_user', JSON.stringify(mockUser))
         window.location.href = '/dashboard'
       } else {
         const userId = `usr_${Date.now()}`
         const res = await createProfile(userId, { name: form.name, email: form.email })
-        if (res.success && res.user) {
-          localStorage.setItem('traveloop_user', JSON.stringify(res.user))
-          window.location.href = '/dashboard'
-          return
-        }
-        const newUser = { id: userId, ...form }
-        localStorage.setItem('traveloop_user', JSON.stringify(newUser))
+        if (res.success && res.user) { localStorage.setItem('traveloop_user', JSON.stringify(res.user)); window.location.href = '/dashboard'; return }
+        localStorage.setItem('traveloop_user', JSON.stringify({ id: userId, ...form }))
         window.location.href = '/dashboard'
       }
-    } catch (err) {
-      console.error('Auth error:', err)
+    } catch {
       setErrors({ submit: 'Something went wrong. Please try again.' })
     } finally {
       setIsLoading(false)
     }
   }
 
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1, padding: '12px 16px', borderRadius: 14, border: 'none', cursor: 'pointer',
+    fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.875rem',
+    transition: 'all .3s ease',
+    background: active ? '#EAEFF5' : 'transparent',
+    color: active ? '#6C63FF' : '#64748B',
+    boxShadow: active
+      ? '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)'
+      : 'none',
+  })
+
   return (
-    <div className={`relative min-h-screen flex flex-col justify-center items-center ${THEME.colors.background} text-slate-900 font-sans overflow-hidden`}>
-      
-      {/* 🌤️ Light Background Layers */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.08)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[url('/light-pattern.svg')] bg-repeat opacity-[0.03]" />
-      
-      {/* ✨ Header */}
-      <header className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-            <Compass className="h-5 w-5 text-white" />
+    <div style={{ minHeight: '100vh', background: '#EAEFF5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1.5rem' }}>
+
+      {/* Decorative blobs */}
+      <div style={{ position: 'absolute', top: -80, right: -80, width: 360, height: 360, background: 'rgba(108,99,255,.06)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -100, left: -80, width: 320, height: 320, background: 'rgba(139,92,246,.05)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
+
+      {/* Header */}
+      <header style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '2rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div className="neu-raised" style={{ width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Compass style={{ width: 22, height: 22, color: '#6C63FF' }} />
           </div>
-          <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-indigo-700">
-            Traveloop
-          </span>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.4rem', color: '#1E293B' }}>Traveloop</span>
         </div>
-        <span className="text-xs font-bold tracking-widest uppercase text-indigo-600 bg-indigo-50 border border-indigo-200 px-3 py-1.5 rounded-full">
+        <div className="neu-raised" style={{ padding: '8px 18px', borderRadius: 16, fontSize: 10, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6C63FF' }}>
           Flight TL-2026
-        </span>
+        </div>
       </header>
 
-      {/* 🎯 Main Content */}
-      <main className="w-full max-w-md px-6 py-12 relative z-10">
-        
-        <GlassCard>
-          {/* 🔁 Auth Mode Toggle */}
-          <div className="flex mb-6 bg-slate-100 rounded-xl p-1">
-            <button
-              onClick={() => setAuthMode('login')}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${authMode === 'login' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => setAuthMode('register')}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${authMode === 'register' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Register
-            </button>
+      {/* Main Card */}
+      <main style={{ width: '100%', maxWidth: 460, paddingTop: '5rem', paddingBottom: '3rem', position: 'relative', zIndex: 10 }}>
+        <NeuCard>
+          {/* Toggle Tab */}
+          <div style={{
+            display: 'flex', padding: 6, borderRadius: 18, marginBottom: 32,
+            boxShadow: 'inset 4px 4px 8px rgba(163,177,198,.4), inset -4px -4px 8px rgba(255,255,255,.85)',
+            background: '#EAEFF5',
+          }}>
+            <button style={tabStyle(authMode === 'login')} onClick={() => setAuthMode('login')}>Sign In</button>
+            <button style={tabStyle(authMode === 'register')} onClick={() => setAuthMode('register')}>Register</button>
           </div>
 
-          {/* 📝 Form Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-slate-900">
-              {authMode === 'login' ? 'Welcome back! 👋' : 'Create your account ✨'}
+          {/* Title */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: '#1E293B', margin: 0 }}>
+              {authMode === 'login' ? 'Welcome back! 👋' : 'Create account ✨'}
             </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              {authMode === 'login' 
-                ? 'Sign in to continue your journey' 
-                : 'Start planning your dream trip'}
+            <p style={{ marginTop: 8, fontSize: '0.9rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
+              {authMode === 'login' ? 'Sign in to continue your journey' : 'Start planning your dream trip'}
             </p>
           </div>
 
-          {/* ⚠️ Global Error */}
+          {/* Error */}
           {errors.submit && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{errors.submit}</span>
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px',
+              background: '#EAEFF5', borderRadius: 16, marginBottom: 20,
+              boxShadow: 'inset 3px 3px 8px rgba(239,68,68,.15), inset -3px -3px 8px rgba(255,255,255,.85)',
+              color: '#EF4444', fontSize: '0.85rem', fontFamily: 'Inter, sans-serif'
+            }}>
+              <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2 }} />
+              {errors.submit}
             </div>
           )}
 
-          {/* 📋 Form */}
-          <form onSubmit={handleSubmit} className={`flex flex-col ${THEME.spacing.gap}`}>
-            
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {authMode === 'register' && (
               <>
-                <InputField
-                  label="Full Name"
-                  icon={User}
-                  value={form.name}
-                  onChange={(e) => updateForm('name', e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  error={errors.name}
-                />
-                <InputField
-                  label="Contact Number"
-                  icon={Phone}
-                  type="tel"
-                  value={form.contact}
-                  onChange={(e) => updateForm('contact', e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  required
-                  error={errors.contact}
-                />
+                <InputField label="Full Name" icon={User} value={form.name} onChange={e => updateForm('name', e.target.value)} placeholder="John Doe" required error={errors.name} />
+                <InputField label="Contact Number" icon={Phone} type="tel" value={form.contact} onChange={e => updateForm('contact', e.target.value)} placeholder="+1 (555) 000-0000" required error={errors.contact} />
               </>
             )}
 
-            <InputField
-              label="Email Address"
-              icon={Mail}
-              type="email"
-              value={form.email}
-              onChange={(e) => updateForm('email', e.target.value)}
-              placeholder="you@example.com"
-              required
-              error={errors.email}
-            />
-            
+            <InputField label="Email Address" icon={Mail} type="email" value={form.email} onChange={e => updateForm('email', e.target.value)} placeholder="you@example.com" required error={errors.email} />
+
             {authMode === 'register' && (
-              <div className="grid grid-cols-2 gap-3">
-                <SelectField
-                  label="Country"
-                  icon={Globe}
-                  value={form.country}
-                  options={allCountries}
-                  onSelect={(val) => { updateForm('country', val); updateForm('city', '') }}
-                  placeholder="Select"
-                  searchPlaceholder="Search country..."
-                  error={errors.country}
-                />
-                <SelectField
-                  label="City"
-                  icon={MapPin}
-                  value={form.city}
-                  options={allCities}
-                  onSelect={(val) => updateForm('city', val)}
-                  placeholder="Select"
-                  disabled={!form.country}
-                  searchPlaceholder="Search city..."
-                  error={errors.city}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <SelectField label="Country" icon={Globe} value={form.country} options={allCountries} onSelect={val => { updateForm('country', val); updateForm('city', '') }} placeholder="Select" searchPlaceholder="Search country..." error={errors.country} />
+                <SelectField label="City" icon={MapPin} value={form.city} options={availableCities} onSelect={val => updateForm('city', val)} placeholder="Select" disabled={!form.country} searchPlaceholder="Search city..." error={errors.city} />
               </div>
             )}
 
-            <InputField
-              label="Password"
-              icon={Lock}
-              type="password"
-              value={form.password}
-              onChange={(e) => updateForm('password', e.target.value)}
-              placeholder={authMode === 'login' ? '••••••••' : 'Create a password'}
-              required
-              minLength={6}
-              error={errors.password}
-            />
+            <InputField label="Password" icon={Lock} type="password" value={form.password} onChange={e => updateForm('password', e.target.value)} placeholder={authMode === 'login' ? '••••••••' : 'Create a password'} required minLength={6} error={errors.password} />
 
             {authMode === 'login' && (
-              <div className="text-right -mt-1">
-                <button 
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); alert('Password reset coming soon!') }}
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
-                >
+              <div style={{ textAlign: 'right', marginTop: -8 }}>
+                <button type="button" onClick={e => { e.preventDefault(); alert('Password reset coming soon!') }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6C63FF', fontSize: '0.8rem', fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <PrimaryButton type="submit" loading={isLoading} className="mt-1">
+            <PrimaryButton type="submit" loading={isLoading}>
               {authMode === 'login' ? 'Sign In' : 'Create Account'}
             </PrimaryButton>
-
           </form>
 
-          {/* 🔁 Toggle Auth Mode */}
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-            <p className="text-sm text-slate-600">
+          {/* Switch mode */}
+          <div style={{ marginTop: 24, textAlign: 'center' }}>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
               {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-              <button
-                type="button"
+              <button type="button"
                 onClick={() => { setAuthMode(authMode === 'login' ? 'register' : 'login'); setErrors({}) }}
-                className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6C63FF', fontWeight: 800, fontFamily: 'Inter, sans-serif' }}>
                 {authMode === 'login' ? 'Sign up free' : 'Sign in'}
               </button>
             </p>
           </div>
-        </GlassCard>
-
+        </NeuCard>
       </main>
 
-      {/* 🦶 Footer */}
-      <footer className="absolute bottom-6 text-center text-xs text-slate-500 z-10">
-        <p>© 2026 Traveloop. All rights reserved.</p>
-        <p className="mt-1 text-slate-400">Secure • Fast • Beautiful</p>
+      <footer style={{ position: 'absolute', bottom: 28, textAlign: 'center', zIndex: 10 }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>
+          © 2026 Traveloop · Secure · Fast · Beautiful
+        </p>
       </footer>
 
-      {/* 🎨 Global Styles */}
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { 
-          background: rgba(100,116,139,0.2); 
-          border-radius: 99px; 
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { 
-          background: rgba(100,116,139,0.4); 
-        }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
-        .animate-in { animation: fade-in 0.2s ease-out forwards; }
-        .slide-in-from-top-2 { --tw-translate-y: -0.5rem; }
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   )

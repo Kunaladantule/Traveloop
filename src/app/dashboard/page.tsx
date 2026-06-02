@@ -2,81 +2,59 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { 
-  Sparkles, Plus, ArrowRight, MapPin, Calendar, 
-  Globe, DollarSign, Compass, Briefcase, TrendingUp 
+import {
+  Sparkles, Plus, ArrowRight, MapPin, Calendar,
+  Globe, DollarSign, Compass, Briefcase, Cloud, Star, TrendingUp
 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { getUserTrips } from '@/app/actions/trip'
 
 // ─────────────────────────────────────────────────────────────
-// 📦 Type Definitions
+// Shared Neumorphic tokens
 // ─────────────────────────────────────────────────────────────
-interface TripStop {
-  id: string
-  cityName: string
-  country: string
+const NEU = {
+  BG: '#EAEFF5',
+  raised: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+  hover:  '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
+  pressed:'inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.85)',
+  input:  'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
 }
 
-interface TripExpense {
-  id: string
-  amount: number
-  category: string
-}
-
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
+interface TripStop   { id: string; cityName: string; country: string }
+interface TripExpense{ id: string; amount: number; category: string }
 interface Trip {
-  id: string
-  title: string
-  description?: string | null
-  startDate: Date | string
-  endDate: Date | string
-  totalBudget?: number | null
-  coverImage?: string | null
-  stops?: TripStop[]
-  expenses?: TripExpense[]
+  id: string; title: string; description?: string | null
+  startDate: Date | string; endDate: Date | string
+  totalBudget?: number | null; coverImage?: string | null
+  stops?: TripStop[]; expenses?: TripExpense[]
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🎨 Light Theme Mock Data (Fallback)
+// Mock data
 // ─────────────────────────────────────────────────────────────
 const DEFAULT_MOCK_TRIPS: Trip[] = [
   {
-    id: 'mock_trip_1',
-    title: 'Tokyo Sakura Dream',
+    id: 'mock_trip_1', title: 'Tokyo Sakura Dream',
     description: 'Spring getaway to witness cherry blossoms and explore futuristic electronics hubs.',
-    startDate: '2026-04-10',
-    endDate: '2026-04-18',
-    totalBudget: 3500,
+    startDate: '2026-04-10', endDate: '2026-04-18', totalBudget: 3500,
     coverImage: 'https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&q=80&w=600',
     stops: [{ id: 's1', cityName: 'Tokyo', country: 'Japan' }],
-    expenses: [
-      { id: 'e1', amount: 450, category: 'Food' },
-      { id: 'e2', amount: 1200, category: 'Accommodation' },
-      { id: 'e3', amount: 800, category: 'Activities' }
-    ]
+    expenses: [{ id: 'e1', amount: 450, category: 'Food' }, { id: 'e2', amount: 1200, category: 'Accommodation' }, { id: 'e3', amount: 800, category: 'Activities' }]
   },
   {
-    id: 'mock_trip_2',
-    title: 'Parisian Summer Escape',
+    id: 'mock_trip_2', title: 'Parisian Summer Escape',
     description: 'Strolling through museum halls, café terraces, and watching sunset by the Eiffel Tower.',
-    startDate: '2026-07-05',
-    endDate: '2026-07-12',
-    totalBudget: 5000,
+    startDate: '2026-07-05', endDate: '2026-07-12', totalBudget: 5000,
     coverImage: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=600',
     stops: [{ id: 's2', cityName: 'Paris', country: 'France' }],
-    expenses: [
-      { id: 'e4', amount: 1200, category: 'Flights' },
-      { id: 'e5', amount: 1500, category: 'Accommodation' }
-    ]
+    expenses: [{ id: 'e4', amount: 1200, category: 'Flights' }, { id: 'e5', amount: 1500, category: 'Accommodation' }]
   },
   {
-    id: 'mock_trip_3',
-    title: 'Swiss Alps Wanderer',
+    id: 'mock_trip_3', title: 'Swiss Alps Wanderer',
     description: 'Hiking majestic peaks and tasting world-class chocolates in scenic valleys.',
-    startDate: '2026-09-20',
-    endDate: '2026-09-30',
-    totalBudget: 4200,
+    startDate: '2026-09-20', endDate: '2026-09-30', totalBudget: 4200,
     coverImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&q=80&w=600',
     stops: [{ id: 's3', cityName: 'Zurich', country: 'Switzerland' }],
     expenses: [{ id: 'e6', amount: 300, category: 'Transport' }]
@@ -84,373 +62,383 @@ const DEFAULT_MOCK_TRIPS: Trip[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────
-// 🧩 Reusable Components (Light Theme Optimized)
+// Stat Tile — each inside a neumorphic container (120px height)
 // ─────────────────────────────────────────────────────────────
-
-const StatCard = ({ 
-  label, value, sublabel, icon: Icon, iconColor, hoverColor 
-}: {
-  label: string
-  value: string | number
-  sublabel: string
-  icon: React.ElementType
-  iconColor: string
-  hoverColor: string
+const StatTile = ({ label, value, sublabel, icon: Icon, accent }: {
+  label: string; value: string | number; sublabel: string
+  icon: React.ElementType; accent: string
 }) => (
-  <Card className="group hover:shadow-lg transition-all duration-200 border-slate-200 hover:border-slate-300">
-    <CardContent className="p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wide text-slate-950">{label}</span>
-        <div className={`p-2 rounded-lg bg-slate-100 ${iconColor} group-hover:${hoverColor} transition-colors duration-200`}>
-          <Icon className="h-4 w-4" />
-        </div>
+  <div
+    style={{
+      background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none',
+      padding: '1.25rem 1.5rem', minHeight: 120, display: 'flex', flexDirection: 'column',
+      justifyContent: 'space-between', transition: 'all .3s ease', cursor: 'default',
+    }}
+    onMouseEnter={e => {
+      const el = e.currentTarget as HTMLElement
+      el.style.transform = 'translateY(-4px)'
+      el.style.boxShadow = NEU.hover
+    }}
+    onMouseLeave={e => {
+      const el = e.currentTarget as HTMLElement
+      el.style.transform = 'translateY(0)'
+      el.style.boxShadow = NEU.raised
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{label}</span>
+      <div style={{
+        width: 38, height: 38, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: NEU.BG, boxShadow: NEU.pressed, color: accent,
+      }}>
+        <Icon size={18} />
       </div>
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-slate-900 tracking-tight">{value}</span>
-        <span className="text-[11px] text-slate-800 font-semibold">{sublabel}</span>
-      </div>
-    </CardContent>
-  </Card>
+    </div>
+    <div>
+      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.9rem', color: '#1E293B', lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginTop: 4, fontFamily: 'Inter, sans-serif', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{sublabel}</div>
+    </div>
+  </div>
 )
 
+// ─────────────────────────────────────────────────────────────
+// Trip Card — raised, floats on hover
+// ─────────────────────────────────────────────────────────────
 const TripCard = ({ trip }: { trip: Trip }) => {
   const startDate = new Date(trip.startDate)
-  const endDate = new Date(trip.endDate)
-  
-  const dateRange = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-  
-  const budget = trip.totalBudget || 0
-  const spent = (trip.expenses || []).reduce((sum, exp) => sum + exp.amount, 0)
-  const pctSpent = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0
-  const isOverBudget = pctSpent > 85
-
-  const destination = trip.stops?.[0] 
-    ? `${trip.stops[0].cityName}, ${trip.stops[0].country}` 
-    : 'Destination TBD'
+  const endDate   = new Date(trip.endDate)
+  const dateRange = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  const budget    = trip.totalBudget || 0
+  const spent     = (trip.expenses || []).reduce((s, e) => s + e.amount, 0)
+  const pct       = budget > 0 ? Math.min(Math.round((spent / budget) * 100), 100) : 0
+  const overBudget= pct > 85
+  const dest      = trip.stops?.[0] ? `${trip.stops[0].cityName}, ${trip.stops[0].country}` : 'Destination TBD'
 
   return (
-    <Card 
-      className="group cursor-pointer overflow-hidden border-slate-200 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-      onClick={() => window.location.href = `/dashboard/trips?id=${trip.id}`}
+    <div
+      style={{
+        background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none',
+        overflow: 'hidden', cursor: 'pointer', transition: 'all .3s ease',
+      }}
+      onClick={() => { window.location.href = `/dashboard/trips?id=${trip.id}` }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLElement
+        el.style.transform = 'translateY(-6px)'
+        el.style.boxShadow = NEU.hover
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLElement
+        el.style.transform = 'translateY(0)'
+        el.style.boxShadow = NEU.raised
+      }}
     >
-      {/* Cover Image */}
-      <div className="relative h-40 overflow-hidden bg-slate-100">
-        {trip.coverImage ? (
-          <img 
-            src={trip.coverImage} 
-            alt={trip.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-            <Compass className="h-8 w-8 text-indigo-200" />
-          </div>
-        )}
-        
-        {/* Date Badge */}
-        <div className="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200 shadow-sm">
-          <span className="text-[10px] font-semibold text-slate-700 flex items-center gap-1">
-            <Calendar className="h-3 w-3 text-indigo-500" />
-            {dateRange}
-          </span>
+      {/* Cover image */}
+      <div style={{ position: 'relative', height: 200, padding: 10 }}>
+        <div style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
+          {trip.coverImage
+            ? <img src={trip.coverImage} alt={trip.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .6s ease' }} loading="lazy" />
+            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#DDE4EE' }}><Compass size={32} color="#94A3B8" /></div>
+          }
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.4) 0%, transparent 60%)' }} />
         </div>
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+
+        {/* Date badge */}
+        <div style={{
+          position: 'absolute', top: 20, right: 20, padding: '6px 12px', borderRadius: 12,
+          background: 'rgba(255,255,255,.72)', backdropFilter: 'blur(10px)',
+          boxShadow: '4px 4px 10px rgba(163,177,198,.35), -4px -4px 10px rgba(255,255,255,.8)',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <Calendar size={11} color="#6C63FF" />
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{dateRange}</span>
+        </div>
       </div>
 
       {/* Content */}
-      <CardContent className="p-5 flex flex-col gap-4">
-        <div>
-          <h3 className="font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-1">
-            {trip.title}
-          </h3>
-          <p className="text-sm text-slate-800 line-clamp-2 mt-1 font-medium">
-            {trip.description || 'No description added yet.'}
-          </p>
-        </div>
+      <div style={{ padding: '4px 18px 18px' }}>
+        <h3 style={{
+          fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem',
+          color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>{trip.title}</h3>
+        <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: 6, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {trip.description || 'No description yet.'}
+        </p>
 
         {/* Destination */}
-        <div className="flex items-center gap-1.5 text-sm text-slate-850 font-semibold">
-          <MapPin className="h-4 w-4 text-indigo-500 shrink-0" />
-          <span className="font-medium truncate">{destination}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+          <MapPin size={14} color="#6C63FF" />
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', fontFamily: 'Inter, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dest}</span>
         </div>
 
-        {/* Budget Progress */}
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-slate-800 font-semibold">Budget: ${budget.toLocaleString()}</span>
-            <span className={`font-semibold ${isOverBudget ? 'text-red-650' : 'text-indigo-600'}`}>
-              ${spent.toLocaleString()} ({pctSpent}%)
-            </span>
+        {/* Budget progress */}
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>
+            <span style={{ color: '#94A3B8' }}>Budget ${budget.toLocaleString()}</span>
+            <span style={{ color: overBudget ? '#EF4444' : '#6C63FF' }}>${spent.toLocaleString()} ({pct}%)</span>
           </div>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${
-                isOverBudget 
-                  ? 'bg-gradient-to-r from-red-500 to-rose-500' 
-                  : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-              }`}
-              style={{ width: `${pctSpent}%` }}
-            />
+          {/* progress bar track — inset */}
+          <div style={{ height: 10, borderRadius: 999, background: NEU.BG, boxShadow: NEU.pressed, overflow: 'hidden', padding: 2 }}>
+            <div style={{
+              height: '100%', borderRadius: 999, width: `${pct}%`, transition: 'width .5s ease',
+              background: overBudget ? '#EF4444' : 'linear-gradient(90deg, #6C63FF, #8B5CF6)'
+            }} />
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🚀 Main Dashboard Page Component
+// Bento Widget — floating neumorphic widget for hero section
 // ─────────────────────────────────────────────────────────────
+const BentoWidget = ({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{
+    background: NEU.BG, borderRadius: 20, boxShadow: NEU.raised, border: 'none',
+    padding: '1.1rem 1.25rem', transition: 'all .3s ease', ...style
+  }}>
+    {children}
+  </div>
+)
 
+// ─────────────────────────────────────────────────────────────
+// Main Dashboard Page
+// ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const [user, setUser] = useState<{ id: string; name?: string; email?: string } | null>(null)
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Load user and trips
   useEffect(() => {
-    const loadUserData = async () => {
-      const userStr = localStorage.getItem('traveloop_user')
-      
-      if (!userStr) {
-        window.location.href = '/'
-        return
-      }
-
-      let parsedUser: any = null
+    const load = async () => {
+      const raw = localStorage.getItem('traveloop_user')
+      if (!raw) { window.location.href = '/'; return }
+      let u: any = null
       try {
-        parsedUser = JSON.parse(userStr)
-        setUser(parsedUser)
-
-        // Try to fetch from API first
-        const res = await getUserTrips(parsedUser.id)
-        
+        u = JSON.parse(raw); setUser(u)
+        const res = await getUserTrips(u.id)
         if (res.success && res.trips?.length > 0) {
           setTrips(res.trips as unknown as Trip[])
         } else {
-          // Fallback to localStorage or mock data
-          const localKey = `traveloop_trips_${parsedUser.id}`
-          const stored = localStorage.getItem(localKey)
-          
-          if (stored) {
-            setTrips(JSON.parse(stored))
-          } else {
-            localStorage.setItem(localKey, JSON.stringify(DEFAULT_MOCK_TRIPS))
-            setTrips(DEFAULT_MOCK_TRIPS)
-          }
+          const key = `traveloop_trips_${u.id}`
+          const stored = localStorage.getItem(key)
+          if (stored) setTrips(JSON.parse(stored))
+          else { localStorage.setItem(key, JSON.stringify(DEFAULT_MOCK_TRIPS)); setTrips(DEFAULT_MOCK_TRIPS) }
         }
-      } catch (err) {
-        console.warn('Failed to load trips, using offline data:', err)
-        const localKey = `traveloop_trips_${parsedUser?.id || 'guest'}`
-        const stored = localStorage.getItem(localKey)
-        
-        if (stored) {
-          setTrips(JSON.parse(stored))
-        } else {
-          localStorage.setItem(localKey, JSON.stringify(DEFAULT_MOCK_TRIPS))
-          setTrips(DEFAULT_MOCK_TRIPS)
-        }
-      } finally {
-        setLoading(false)
-      }
+      } catch {
+        const key = `traveloop_trips_${u?.id || 'guest'}`
+        const stored = localStorage.getItem(key)
+        if (stored) setTrips(JSON.parse(stored))
+        else { localStorage.setItem(key, JSON.stringify(DEFAULT_MOCK_TRIPS)); setTrips(DEFAULT_MOCK_TRIPS) }
+      } finally { setLoading(false) }
     }
-
-    loadUserData()
+    load()
   }, [])
 
-  // Calculate stats
   const stats = {
     totalTrips: trips.length,
-    upcomingTrips: trips.filter(t => new Date(t.startDate) > new Date()).length,
-    countriesVisited: Array.from(new Set(
-      trips.flatMap(t => t.stops?.map(s => s.country) || [])
-    )).filter(Boolean).length,
-    totalSpent: trips.reduce((acc, trip) => 
-      acc + (trip.expenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0), 0
-    )
+    upcoming:   trips.filter(t => new Date(t.startDate) > new Date()).length,
+    countries:  Array.from(new Set(trips.flatMap(t => t.stops?.map(s => s.country) || []))).filter(Boolean).length,
+    spent:      trips.reduce((a, t) => a + (t.expenses?.reduce((s, e) => s + e.amount, 0) || 0), 0)
   }
 
-  // Loading State
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-3 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-sm text-slate-900 font-bold">Loading your journeys...</span>
-        </div>
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', flexDirection: 'column', gap: 20 }}>
+      <div style={{ width: 64, height: 64, borderRadius: 24, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Compass size={28} color="#6C63FF" style={{ animation: 'spin 1.5s linear infinite' }} />
       </div>
-    )
-  }
+      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>Loading Journeys...</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+
+  const firstName = user?.name?.split(' ')[0] || 'Traveler'
 
   return (
-    <div className="flex flex-col gap-10 max-w-7xl mx-auto">
-      
-      {/* 🎯 HERO SECTION */}
-      <section className="text-center py-4">
-        <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white/95 p-8 shadow-xl shadow-slate-200/50 backdrop-blur-xl">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-semibold uppercase tracking-wide mb-5">
-            <Sparkles className="h-3.5 w-3.5" />
-            Intelligent Travel Assistant
-          </div>
-          
-          {/* Title */}
-          <h1 className="font-heading font-black text-4xl md:text-5xl text-slate-950 tracking-tight drop-shadow-[0_12px_24px_rgba(15,23,42,0.08)]">
-            Welcome back, {user?.name?.split(' ')[0] || 'Traveler'}! ✈️
-          </h1>
-          
-          {/* Subtitle */}
-          <p className="text-lg text-slate-800 mt-3 max-w-3xl mx-auto font-semibold">
-            Plan smarter, travel better. Create personalized trips with AI-powered itineraries, budget tracking, and local insights.
-          </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 48, maxWidth: 1200, margin: '0 auto' }}>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
-            <Button 
-              onClick={() => window.location.href = '/dashboard/ai-planner'}
-              className="min-w-[190px] px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-700 to-blue-700 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold shadow-xl shadow-indigo-200/40 hover:shadow-2xl transition-all duration-200"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate with AI
-            </Button>
-
-            <Button 
-              onClick={() => window.location.href = '/dashboard/trips'}
-              variant="outline"
-              className="min-w-[190px] px-6 py-3 rounded-xl bg-white border border-slate-300 text-slate-950 shadow-sm hover:bg-slate-100 hover:border-slate-400 font-semibold transition-all duration-200"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Manual Trip
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* ✨ AI PLANNER PROMOTION CARD */}
+      {/* ── HERO SECTION: Bento Grid ── */}
       <section>
-        <Card className="relative overflow-hidden border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-          <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
-            {/* Icon + Text */}
-            <div className="flex-1 flex flex-col gap-3">
-              <div className="flex items-center gap-2.5 text-indigo-700">
-                <div className="p-2 rounded-lg bg-indigo-100">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <span className="text-xs font-bold uppercase tracking-wider">Powered by TripO AI</span>
+        {/* Main greeting card */}
+        <div style={{
+          background: NEU.BG, borderRadius: 32, boxShadow: NEU.raised, border: 'none',
+          padding: '2.5rem 3rem', marginBottom: 20, animation: 'floatHero 5s ease-in-out infinite',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+            <div style={{ flex: 1, minWidth: 280 }}>
+              {/* Badge */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '6px 16px', borderRadius: 999,
+                background: NEU.BG, boxShadow: NEU.raised,
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6C63FF',
+                marginBottom: 18,
+              }}>
+                <Sparkles size={13} />
+                Intelligent Travel Assistant
               </div>
-              
-              <h3 className="text-xl font-heading font-bold text-slate-900">
-                🤖 AI Trip Planner
-              </h3>
-              
-              <p className="text-slate-900 text-sm md:text-base leading-relaxed font-medium">
-                Enter your destination and travel style. We'll instantly craft a personalized itinerary with nearby attractions, activities, and real-time budget insights.
+
+              <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: '#1E293B', margin: '0 0 12px', lineHeight: 1.15 }}>
+                Welcome back, {firstName}! ✈️
+              </h1>
+              <p style={{ fontSize: '1rem', color: '#64748B', fontFamily: 'Inter, sans-serif', marginBottom: 28, lineHeight: 1.7 }}>
+                Plan smarter, travel better. Create personalized trips with AI-powered itineraries, budget tracking, and local insights.
               </p>
+
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <button
+                  className="neu-btn-primary"
+                  onClick={() => { window.location.href = '/dashboard/ai-planner' }}
+                  style={{ padding: '14px 28px' }}
+                >
+                  <Sparkles size={17} />
+                  Generate with AI
+                </button>
+                <button
+                  className="neu-btn"
+                  onClick={() => { window.location.href = '/dashboard/trips' }}
+                  style={{ padding: '14px 28px', color: '#334155' }}
+                >
+                  <Plus size={17} />
+                  Create Trip
+                </button>
+              </div>
             </div>
 
-            {/* CTA Button */}
-            <Button
-              onClick={() => window.location.href = '/dashboard/ai-planner'}
-              size="lg"
-              className="shrink-0 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-md shadow-indigo-200/50 hover:shadow-lg transition-all duration-200"
-            >
-              Try AI Planner
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </CardContent>
-          
-          {/* Decorative Background Elements */}
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100/50 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-100/50 rounded-full blur-2xl pointer-events-none" />
-        </Card>
-      </section>
+            {/* Bento widgets — right side */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 220, maxWidth: 280, flex: '0 0 auto' }}>
+              {/* Weather widget */}
+              <BentoWidget>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 12, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Cloud size={18} color="#06B6D4" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>Today</div>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.25rem', color: '#1E293B' }}>24°C ☀️</div>
+                  </div>
+                </div>
+              </BentoWidget>
 
-      {/* 📊 STATISTICS GRID */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Trips"
-          value={stats.totalTrips}
-          sublabel="Planned"
-          icon={Briefcase}
-          iconColor="text-slate-600"
-          hoverColor="text-indigo-600 bg-indigo-50"
-        />
-        <StatCard
-          label="Upcoming"
-          value={stats.upcomingTrips}
-          sublabel="In Queue"
-          icon={Calendar}
-          iconColor="text-slate-600"
-          hoverColor="text-amber-600 bg-amber-50"
-        />
-        <StatCard
-          label="Countries"
-          value={stats.countriesVisited}
-          sublabel="Explored"
-          icon={Globe}
-          iconColor="text-slate-600"
-          hoverColor="text-emerald-600 bg-emerald-50"
-        />
-        <StatCard
-          label="Total Spent"
-          value={`$${stats.totalSpent.toLocaleString()}`}
-          sublabel="Accumulated"
-          icon={DollarSign}
-          iconColor="text-slate-600"
-          hoverColor="text-purple-600 bg-purple-50"
-        />
-      </section>
+              {/* Upcoming trip widget */}
+              <BentoWidget>
+                <div style={{ fontSize: 10, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'Inter, sans-serif', marginBottom: 8 }}>Next Trip</div>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '0.95rem', color: '#1E293B' }}>
+                  {trips[0]?.title || 'No trips planned'}
+                </div>
+                {trips[0] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
+                    <MapPin size={11} color="#6C63FF" />
+                    <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
+                      {trips[0].stops?.[0]?.cityName || '—'}
+                    </span>
+                  </div>
+                )}
+              </BentoWidget>
 
-      {/* 🗺️ YOUR JOURNEYS SECTION */}
-      <section className="flex flex-col gap-6">
-        {/* Section Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h2 className="text-xl font-heading font-bold text-slate-900">Your Journeys</h2>
-            <p className="text-sm text-slate-900 mt-1 font-semibold">Trips you've created or recently explored</p>
+              {/* AI tip widget */}
+              <BentoWidget>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 11, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={15} color="#F59E0B" />
+                  </div>
+                  <span style={{ fontSize: '0.78rem', color: '#64748B', fontFamily: 'Inter, sans-serif', lineHeight: 1.5 }}>
+                    AI suggests <strong style={{ color: '#6C63FF' }}>Barcelona</strong> for your next adventure
+                  </span>
+                </div>
+              </BentoWidget>
+            </div>
           </div>
-          
-          <Button 
-            variant="ghost" 
-            onClick={() => window.location.href = '/dashboard/trips'}
-            className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-semibold"
+        </div>
+      </section>
+
+      {/* ── AI PROMO BANNER ── */}
+      <section>
+        <div style={{
+          background: NEU.BG, borderRadius: 28, boxShadow: NEU.raised, border: 'none',
+          padding: '1.75rem 2.25rem', display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 240 }}>
+            <div style={{ width: 52, height: 52, borderRadius: 18, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles size={22} color="#6C63FF" />
+            </div>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6C63FF', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Powered by TripO AI</div>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.15rem', color: '#1E293B', margin: 0 }}>🤖 Instant AI Itineraries</h3>
+              <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: 6, fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}>
+                Enter your destination and travel style — get a full day-by-day plan in seconds.
+              </p>
+            </div>
+          </div>
+          <button
+            className="neu-btn-primary"
+            onClick={() => { window.location.href = '/dashboard/ai-planner' }}
+            style={{ padding: '14px 28px', flexShrink: 0 }}
           >
-            View All
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
+            Try AI Planner
+            <ArrowRight size={17} />
+          </button>
+        </div>
+      </section>
+
+      {/* ── STATS GRID ── */}
+      <section>
+        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <TrendingUp size={18} color="#6C63FF" />
+          Your Stats
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
+          <StatTile label="Total Trips"  value={stats.totalTrips} sublabel="Planned"     icon={Briefcase} accent="#6C63FF" />
+          <StatTile label="Upcoming"     value={stats.upcoming}   sublabel="In Queue"    icon={Calendar}  accent="#F59E0B" />
+          <StatTile label="Countries"    value={stats.countries}  sublabel="Explored"    icon={Globe}     accent="#22C55E" />
+          <StatTile label="Total Spent"  value={`$${stats.spent.toLocaleString()}`} sublabel="Accumulated" icon={DollarSign} accent="#A78BFA" />
+        </div>
+      </section>
+
+      {/* ── JOURNEYS SECTION ── */}
+      <section>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.4rem', color: '#1E293B', margin: 0 }}>Your Journeys</h2>
+            <p style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: 6, fontFamily: 'Inter, sans-serif' }}>Trips you've created or recently explored</p>
+          </div>
+          <button
+            className="neu-btn"
+            onClick={() => { window.location.href = '/dashboard/trips' }}
+            style={{ padding: '10px 20px', color: '#6C63FF', fontSize: '0.85rem' }}
+          >
+            View All <ArrowRight size={15} />
+          </button>
         </div>
 
-        {/* Trips Grid */}
         {trips.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
+            {trips.map(trip => <TripCard key={trip.id} trip={trip} />)}
           </div>
         ) : (
-          /* Empty State */
-          <Card className="border-dashed border-slate-300 bg-slate-50/50">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-100 flex items-center justify-center mb-4">
-                <Compass className="h-8 w-8 text-indigo-500" />
-              </div>
-              <h3 className="font-semibold text-slate-900 mb-2">No trips yet</h3>
-              <p className="text-sm text-slate-900 mb-4 font-semibold">Start planning your first adventure!</p>
-              <Button 
-                onClick={() => window.location.href = '/dashboard/ai-planner'}
-                className="bg-indigo-600 hover:bg-indigo-500"
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Create with AI
-              </Button>
-            </CardContent>
-          </Card>
+          <div style={{
+            background: NEU.BG, borderRadius: 28, boxShadow: NEU.raised, border: 'none',
+            padding: '4rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center'
+          }}>
+            <div style={{ width: 72, height: 72, borderRadius: 24, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <Compass size={32} color="#94A3B8" />
+            </div>
+            <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#1E293B', margin: '0 0 8px' }}>No trips yet</h3>
+            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: 24, fontFamily: 'Inter, sans-serif' }}>Start planning your first adventure!</p>
+            <button className="neu-btn-primary" onClick={() => { window.location.href = '/dashboard/ai-planner' }}>
+              <Sparkles size={16} /> Create with AI
+            </button>
+          </div>
         )}
       </section>
 
+      <style>{`
+        @keyframes floatHero {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-8px); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   )
 }

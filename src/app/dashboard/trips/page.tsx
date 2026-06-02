@@ -3,272 +3,230 @@
 
 import React, { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { 
-  Plus, MapPin, Calendar, Compass, Search, Trash2, Share2, Edit3, 
-  TrendingUp, AlertTriangle, ArrowLeft, DollarSign, Coffee, FileText, 
+import {
+  Plus, MapPin, Calendar, Compass, Search, Trash2, Share2, Edit3,
+  TrendingUp, AlertTriangle, ArrowLeft, DollarSign, Coffee, FileText,
   Clock, Star, Check, ChevronRight, Utensils, Sparkles, PieChart as PieChartIcon
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { 
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend 
+import {
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip
 } from 'recharts'
 import { getUserTrips, deleteTrip, updateTripBudget } from '@/app/actions/trip'
 
 // ─────────────────────────────────────────────────────────────
-// 📦 Type Definitions
+// Shared Neumorphic tokens
 // ─────────────────────────────────────────────────────────────
-interface TripStop {
-  id: string
-  cityName: string
-  country: string
+const NEU = {
+  BG:      '#EAEFF5',
+  raised:  '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+  hover:   '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
+  pressed: 'inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.85)',
+  input:   'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
 }
 
-interface TripExpense {
-  id: string
-  amount: number
-  category: string
-}
-
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
+interface TripStop   { id: string; cityName: string; country: string }
+interface TripExpense{ id: string; amount: number; category: string }
 interface Trip {
-  id: string
-  title: string
-  description?: string | null
-  startDate: string
-  endDate: string
-  totalBudget?: number | null
-  coverImage?: string | null
-  stops?: TripStop[]
-  expenses?: TripExpense[]
-  itineraryDays?: Array<{
-    day: number
-    totalSpent: number
-    activities: Array<{
-      name: string
-      time: string
-      rating?: string
-      city?: string
-      expense: number
-      isMeal?: boolean
-    }>
-  }>
-  smartRecommendations?: Array<{
-    name: string
-    desc: string
-    rating: string
-    type?: string
-  }>
+  id: string; title: string; description?: string | null
+  startDate: string; endDate: string; totalBudget?: number | null
+  coverImage?: string | null; stops?: TripStop[]; expenses?: TripExpense[]
+  itineraryDays?: Array<{ day: number; totalSpent: number; activities: Array<{ name: string; time: string; rating?: string; city?: string; expense: number; isMeal?: boolean; description?: string }> }>
+  smartRecommendations?: Array<{ name: string; desc: string; rating: string; type?: string }>
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🧩 Reusable Components (Light Theme + Larger Text)
+// Neumorphic Tab Button
 // ─────────────────────────────────────────────────────────────
-
-const TabButton = ({ 
-  active, onClick, children, icon: Icon 
-}: { 
-  active: boolean; onClick: () => void; children: React.ReactNode; icon?: React.ElementType 
+const TabButton = ({ active, onClick, children, icon: Icon }: {
+  active: boolean; onClick: () => void; children: React.ReactNode; icon?: React.ElementType
 }) => (
   <button
     onClick={onClick}
-    className={`flex items-center gap-2 px-5 py-3 text-base font-bold rounded-xl transition-all ${
-      active 
-        ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300 shadow-sm' 
-        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-2 border-transparent'
-    }`}
+    style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 20px', borderRadius: 16, border: 'none', cursor: 'pointer',
+      fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.875rem',
+      background: NEU.BG,
+      boxShadow: active ? NEU.pressed : NEU.raised,
+      color: active ? '#6C63FF' : '#64748B',
+      transition: 'all .3s ease', transform: active ? 'scale(.97)' : 'scale(1)',
+    }}
   >
-    {Icon && <Icon className="h-5 w-5" />}
+    {Icon && <Icon size={17} />}
     {children}
   </button>
 )
 
-const ExpenseRow = ({ 
-  label, description, value, onChange, currency, color 
-}: { 
-  label: string; description: string; value: number; onChange: (val: number) => void; currency: string; color: string 
+// ─────────────────────────────────────────────────────────────
+// Expense Row
+// ─────────────────────────────────────────────────────────────
+const ExpenseRow = ({ label, description, value, onChange, currency }: {
+  label: string; description: string; value: number; onChange: (v: number) => void; currency: string; color?: string
 }) => (
-  <div className="flex items-center justify-between gap-4 py-4 border-b border-slate-100 last:border-0">
-    <div className="flex flex-col">
-      <span className="text-base font-bold text-slate-950">{label}</span>
-      <span className="text-sm text-slate-500">{description}</span>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderBottom: '1px solid rgba(163,177,198,.15)' }}>
+    <div>
+      <span style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.9rem', color: '#1E293B' }}>{label}</span>
+      <span style={{ display: 'block', fontSize: '0.78rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginTop: 2 }}>{description}</span>
     </div>
-    <div className="flex items-center gap-2">
-      <span className="text-base font-bold text-slate-600">{currency}</span>
-      <Input 
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem' }}>{currency}</span>
+      <input
         type="number"
         value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-        className="w-32 h-10 text-base font-bold text-slate-955 border-slate-350 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-white"
+        onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        style={{
+          width: 120, padding: '8px 14px', borderRadius: 12, border: 'none', outline: 'none',
+          background: NEU.BG, boxShadow: NEU.input, fontWeight: 700, fontSize: '0.9rem',
+          color: '#1E293B', fontFamily: 'Inter, sans-serif',
+        }}
       />
     </div>
   </div>
 )
 
+// ─────────────────────────────────────────────────────────────
+// Activity Item
+// ─────────────────────────────────────────────────────────────
 const ActivityItem = ({ activity, currency }: { activity: any; currency: string }) => {
-  if (activity.isMeal) {
-    return (
-      <div className="flex items-center gap-4 bg-amber-50 px-5 py-4 rounded-xl border border-amber-250 shadow-sm">
-        <Utensils className="h-5 w-5 text-amber-700 shrink-0" />
-        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <span className="text-base font-semibold text-slate-900">{activity.name}</span>
-          <span className="text-sm font-bold text-amber-800">
-            Est: {currency}{activity.expense}
-          </span>
+  if (activity.isMeal) return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderRadius: 14, background: NEU.BG, boxShadow: NEU.pressed }}>
+      <Utensils size={16} color="#F59E0B" style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#334155' }}>{activity.name}</span>
+      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>{currency}{activity.expense}</span>
+    </div>
+  )
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px', borderRadius: 16, background: NEU.BG, boxShadow: NEU.raised, transition: 'all .25s ease' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.hover }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.raised }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <Clock size={13} color="#94A3B8" />
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{activity.time}</span>
+          {activity.city && <div style={{ padding: '2px 10px', borderRadius: 999, background: NEU.BG, boxShadow: NEU.pressed, fontSize: 11, color: '#64748B', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{activity.city}</div>}
         </div>
+        <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: 0, fontSize: '0.95rem' }}>{activity.name}</h4>
+        {activity.description && <p style={{ fontSize: '0.82rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: '4px 0 0' }}>{activity.description}</p>}
       </div>
-    )
-  }
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+        {activity.rating && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Star size={13} color="#F59E0B" style={{ fill: '#F59E0B' }} />
+            <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{activity.rating}</span>
+          </div>
+        )}
+        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif' }}>
+          {activity.expense > 0 ? `${currency}${activity.expense}` : 'Free'}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Hidden Gem Card
+// ─────────────────────────────────────────────────────────────
+const HiddenGemCard = ({ gem }: { gem: any }) => (
+  <div
+    style={{ background: NEU.BG, borderRadius: 20, boxShadow: NEU.raised, border: 'none', padding: '1.1rem 1.25rem', transition: 'all .3s ease' }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.hover }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.raised }}
+  >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: '#6C63FF', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>{gem.type || 'Hidden Gem'}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Star size={13} color="#F59E0B" style={{ fill: '#F59E0B' }} />
+        <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{gem.rating}</span>
+      </div>
+    </div>
+    <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 6px', fontSize: '0.95rem' }}>{gem.name}</h4>
+    <p style={{ fontSize: '0.82rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{gem.desc}</p>
+  </div>
+)
+
+// ─────────────────────────────────────────────────────────────
+// Note Item
+// ─────────────────────────────────────────────────────────────
+const NoteItem = ({ note, onDelete }: { note: { id: string; content: string }; onDelete: (id: string) => void }) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, padding: '16px 18px', borderRadius: 18, background: NEU.BG, boxShadow: NEU.raised, border: 'none' }}>
+    <p style={{ fontSize: '0.9rem', color: '#1E293B', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{note.content}</p>
+    <button onClick={() => onDelete(note.id)} style={{ padding: 8, borderRadius: 12, border: 'none', cursor: 'pointer', background: NEU.BG, boxShadow: NEU.raised, color: '#94A3B8', transition: 'color .2s ease', flexShrink: 0 }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#EF4444' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
+    ><Trash2 size={14} /></button>
+  </div>
+)
+
+// ─────────────────────────────────────────────────────────────
+// Trip Card (Listing)
+// ─────────────────────────────────────────────────────────────
+const TripCard = ({ trip, onClick, onDelete, currency }: {
+  trip: Trip; onClick: () => void; onDelete: (e: React.MouseEvent) => void; currency: string
+}) => {
+  const startF = new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const endF   = new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const dest   = trip.stops?.[0] ? `${trip.stops[0].cityName}, ${trip.stops[0].country}` : 'No destination'
 
   return (
-    <div className="group relative flex items-start gap-4 pl-2">
-      {/* Timeline dot */}
-      <div className="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white absolute left-[-22px] top-3 shadow-sm" />
-      
-      <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-200 transition-all">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-slate-600" />
-            <span className="text-sm font-semibold text-slate-600 font-mono">{activity.time}</span>
-            {activity.city && (
-              <span className="text-sm font-semibold text-slate-905 bg-white px-2.5 py-0.5 rounded border border-slate-350">
-                {activity.city}
-              </span>
-            )}
-          </div>
-          <h4 className="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-            {activity.name}
-          </h4>
+    <div
+      onClick={onClick}
+      style={{ background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none', overflow: 'hidden', cursor: 'pointer', transition: 'all .3s ease' }}
+      onMouseEnter={e => { const el = e.currentTarget; el.style.transform = 'translateY(-6px)'; el.style.boxShadow = NEU.hover }}
+      onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = NEU.raised }}
+    >
+      <div style={{ position: 'relative', height: 160, padding: 10 }}>
+        <div style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
+          {trip.coverImage
+            ? <img src={trip.coverImage} alt={trip.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+            : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#DDE4EE' }}><Compass size={32} color="#94A3B8" /></div>
+          }
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.4) 0%, transparent 50%)' }} />
         </div>
-
-        <div className="flex items-center gap-4 text-sm">
-          {activity.rating && (
-            <div className="flex items-center gap-1 text-amber-500">
-              <Star className="h-4 w-4 fill-current" />
-              <span className="font-bold text-slate-700">{activity.rating}</span>
+        <button
+          onClick={onDelete}
+          style={{ position: 'absolute', top: 20, right: 20, width: 36, height: 36, borderRadius: 12, border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,.7)', backdropFilter: 'blur(8px)', boxShadow: '4px 4px 10px rgba(163,177,198,.3), -4px -4px 10px rgba(255,255,255,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', transition: 'color .2s ease', zIndex: 10 }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#EF4444' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
+        ><Trash2 size={14} /></button>
+      </div>
+      <div style={{ padding: '6px 18px 18px' }}>
+        <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#1E293B', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{trip.title}</h3>
+        <p style={{ fontSize: '0.82rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: '6px 0 12px' }}>
+          {trip.description || 'No description yet.'}
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14, paddingTop: 12, borderTop: '1px solid rgba(163,177,198,.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
+            <Calendar size={13} color="#6C63FF" /> {startF} – {endF}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
+            <MapPin size={13} color="#6C63FF" /> <span style={{ maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dest}</span>
+          </div>
+          {trip.totalBudget && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>
+              <DollarSign size={13} color="#22C55E" /> {currency}{trip.totalBudget.toLocaleString()}
             </div>
           )}
-          <span className="text-slate-600">
-            Cost: <span className="font-bold text-slate-950">
-              {activity.expense > 0 ? `${currency}${activity.expense}` : 'Free'}
-            </span>
-          </span>
         </div>
       </div>
     </div>
   )
 }
 
-const HiddenGemCard = ({ gem }: { gem: any }) => (
-  <Card className="group overflow-hidden border-slate-350 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 bg-white">
-    <CardContent className="p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-705 text-xs font-bold uppercase tracking-wide">
-          {gem.type || 'Hidden Gem'}
-        </span>
-        <div className="flex items-center gap-1 text-amber-500">
-          <Star className="h-4 w-4 fill-current" />
-          <span className="font-bold text-slate-700 text-sm">{gem.rating}</span>
-        </div>
-      </div>
-      
-      <h4 className="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-        {gem.name}
-      </h4>
-      
-      <p className="text-base text-slate-600 leading-relaxed">{gem.desc}</p>
-      
-      <button className="text-sm font-bold text-indigo-650 hover:text-indigo-700 flex items-center gap-1 mt-auto">
-        View Details
-        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-      </button>
-    </CardContent>
-  </Card>
+// ─────────────────────────────────────────────────────────────
+// NeuCard helper
+// ─────────────────────────────────────────────────────────────
+const NeuCard = ({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{ background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none', padding: '1.75rem 2rem', ...style }}>{children}</div>
 )
 
-const NoteItem = ({ note, onDelete }: { note: { id: string; content: string }; onDelete: (id: string) => void }) => (
-  <div className="flex items-start justify-between gap-4 p-5 rounded-xl border border-slate-300 bg-white hover:border-indigo-200 transition-colors">
-    <p className="text-base text-slate-950 leading-relaxed font-medium">{note.content}</p>
-    <button 
-      onClick={() => onDelete(note.id)}
-      className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-      aria-label="Delete note"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
-  </div>
-)
-
-const TripCard = ({ 
-  trip, onClick, onDelete, currency 
-}: { 
-  trip: Trip; onClick: () => void; onDelete: (e: React.MouseEvent) => void; currency: string 
-}) => {
-  const startFormatted = new Date(trip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const endFormatted = new Date(trip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const destination = trip.stops?.[0] ? `${trip.stops[0].cityName}, ${trip.stops[0].country}` : 'No destination'
-
-  return (
-    <Card 
-      onClick={onClick}
-      className="group cursor-pointer overflow-hidden border-slate-200 hover:border-indigo-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
-    >
-      {/* Cover Image */}
-      <div className="relative h-36 overflow-hidden bg-slate-100">
-        {trip.coverImage ? (
-          <img src={trip.coverImage} alt={trip.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-            <Compass className="h-10 w-10 text-indigo-200" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
-        
-        {/* Delete Button */}
-        <button 
-          onClick={onDelete}
-          className="absolute top-3 right-3 p-2 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-300 text-slate-650 hover:text-red-600 hover:bg-red-50 transition-all z-10"
-          aria-label="Delete trip"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-
-      {/* Content */}
-      <CardContent className="p-5">
-        <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-1">
-          {trip.title}
-        </h3>
-        <p className="text-base text-slate-600 line-clamp-2 mt-2 leading-relaxed">
-          {trip.description || 'No description added yet.'}
-        </p>
-        
-        {/* Meta Info */}
-        <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <Calendar className="h-4 w-4 text-indigo-500 shrink-0" />
-            <span>{startFormatted} - {endFormatted}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-slate-600">
-            <MapPin className="h-4 w-4 text-indigo-500 shrink-0" />
-            <span className="truncate max-w-[150px]">{destination}</span>
-          </div>
-          {trip.totalBudget && (
-            <div className="flex items-center gap-1.5 text-sm font-bold text-slate-950">
-              <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>{currency}{trip.totalBudget.toLocaleString()}</span>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 // ─────────────────────────────────────────────────────────────
-// 🚀 Inner Trips Page Component (with useSearchParams)
+// Inner Trips Page
 // ─────────────────────────────────────────────────────────────
-
 function TripsPageInner() {
   const searchParams = useSearchParams()
   const activeId = searchParams.get('id')
@@ -277,697 +235,439 @@ function TripsPageInner() {
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  
-  // Tab state for detailed view
   const [activeTab, setActiveTab] = useState<'itinerary' | 'budget' | 'gems' | 'notes'>('itinerary')
-  
-  // Currency symbol
   const [currencySymbol, setCurrencySymbol] = useState('$')
-
-  // Notes state
   const [notes, setNotes] = useState<Array<{ id: string; content: string }>>([])
   const [newNoteText, setNewNoteText] = useState('')
 
   const handleCreateManualTrip = () => {
     const mockTitle = prompt('Enter Trip Destination:', 'Paris')
     if (!mockTitle) return
-    const tempId = `man_trip_${Date.now()}`
+    const id = `man_trip_${Date.now()}`
     const newTrip: Trip = {
-      id: tempId,
-      title: `Trip to ${mockTitle}`,
-      description: 'Custom travel plan',
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 5*24*60*60*1000).toISOString(),
-      totalBudget: 8000,
-      coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=600',
-      stops: [{ id: 's_1', cityName: mockTitle, country: 'Unknown' }],
-      expenses: [
-        { id: 'e_1', amount: 1500, category: 'Transport' },
-        { id: 'e_2', amount: 3000, category: 'Hotel' }
-      ]
+      id, title: `Trip to ${mockTitle}`, description: 'Custom travel plan',
+      startDate: new Date().toISOString(), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      totalBudget: 8000, coverImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=600',
+      stops: [{ id: 's1', cityName: mockTitle, country: 'Unknown' }],
+      expenses: [{ id: 'e1', amount: 1500, category: 'Transport' }, { id: 'e2', amount: 3000, category: 'Hotel' }]
     }
-    const updated = [newTrip, ...trips]
-    setTrips(updated)
+    const updated = [newTrip, ...trips]; setTrips(updated)
     if (user) localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updated))
-    window.location.href = `/dashboard/trips?id=${tempId}`
+    window.location.href = `/dashboard/trips?id=${id}`
   }
 
-  // Load User & Trips
   useEffect(() => {
-    const loadUserData = async () => {
-      const userStr = localStorage.getItem('traveloop_user')
-      if (!userStr) {
-        window.location.href = '/'
-        return
-      }
-      const parsedUser = JSON.parse(userStr)
-      setUser(parsedUser)
-
-      // Set currency based on country
-      if (parsedUser.country) {
-        const c = parsedUser.country.toLowerCase()
+    const load = async () => {
+      const raw = localStorage.getItem('traveloop_user')
+      if (!raw) { window.location.href = '/'; return }
+      const u = JSON.parse(raw); setUser(u)
+      if (u.country) {
+        const c = u.country.toLowerCase()
         if (c.includes('india')) setCurrencySymbol('₹')
         else if (c.includes('united kingdom') || c.includes('uk')) setCurrencySymbol('£')
         else if (c.includes('france') || c.includes('germany') || c.includes('italy') || c.includes('spain') || c.includes('europe') || c.includes('switzerland')) setCurrencySymbol('€')
         else if (c.includes('united arab emirates') || c.includes('uae') || c.includes('dubai')) setCurrencySymbol('AED')
         else setCurrencySymbol('$')
       }
-
       try {
-        const res = await getUserTrips(parsedUser.id)
-        let loadedTrips: Trip[] = []
-        
-        if (res.success && res.trips?.length > 0) {
-          loadedTrips = res.trips as unknown as Trip[]
-        } else {
-          const localKey = `traveloop_trips_${parsedUser.id}`
-          const stored = localStorage.getItem(localKey)
-          loadedTrips = stored ? JSON.parse(stored) : []
-        }
-
-        setTrips(loadedTrips)
-
-        // Load active trip if ID present
+        const res = await getUserTrips(u.id)
+        let loaded: Trip[] = []
+        if (res.success && res.trips?.length > 0) loaded = res.trips as unknown as Trip[]
+        else { const s = localStorage.getItem(`traveloop_trips_${u.id}`); loaded = s ? JSON.parse(s) : [] }
+        setTrips(loaded)
         if (activeId) {
-          const found = loadedTrips.find(t => t.id === activeId)
-          if (found) {
-            setActiveTrip(found)
-            // Load notes
-            const notesKey = `traveloop_notes_${found.id}`
-            const storedNotes = localStorage.getItem(notesKey)
-            setNotes(storedNotes ? JSON.parse(storedNotes) : [])
-          }
+          const found = loaded.find(t => t.id === activeId)
+          if (found) { setActiveTrip(found); const n = localStorage.getItem(`traveloop_notes_${found.id}`); setNotes(n ? JSON.parse(n) : []) }
         }
-      } catch (err) {
-        console.warn('Error loading trips:', err)
-        const localKey = `traveloop_trips_${parsedUser.id}`
-        const stored = localStorage.getItem(localKey)
-        const loadedTrips: Trip[] = stored ? JSON.parse(stored) : []
-        setTrips(loadedTrips)
-        
-        if (activeId) {
-          const found = loadedTrips.find(t => t.id === activeId)
-          if (found) {
-            setActiveTrip(found)
-            const notesKey = `traveloop_notes_${found.id}`
-            const storedNotes = localStorage.getItem(notesKey)
-            setNotes(storedNotes ? JSON.parse(storedNotes) : [])
-          }
-        }
-      } finally {
-        setLoading(false)
-      }
+      } catch {
+        const s = localStorage.getItem(`traveloop_trips_${u.id}`); const loaded: Trip[] = s ? JSON.parse(s) : []; setTrips(loaded)
+        if (activeId) { const found = loaded.find(t => t.id === activeId); if (found) { setActiveTrip(found); const n = localStorage.getItem(`traveloop_notes_${found.id}`); setNotes(n ? JSON.parse(n) : []) } }
+      } finally { setLoading(false) }
     }
-
-    loadUserData()
+    load()
   }, [activeId])
 
-  // Delete trip handler
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this trip?')) return
-    try { await deleteTrip(id) } catch(e) {}
-    
-    const updated = trips.filter(t => t.id !== id)
-    setTrips(updated)
+    if (!confirm('Delete this trip?')) return
+    try { await deleteTrip(id) } catch { /* no-op */ }
+    const updated = trips.filter(t => t.id !== id); setTrips(updated)
     if (user) localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updated))
     window.location.href = '/dashboard/trips'
   }
 
-  // Budget handlers
-  const handleExpenseChange = (category: string, value: number) => {
+  const handleExpenseChange = (cat: string, val: number) => {
     if (!activeTrip) return
-    const currentExpenses = [...(activeTrip.expenses || [])]
-    const idx = currentExpenses.findIndex(e => e.category === category)
-    
-    if (idx >= 0) currentExpenses[idx].amount = value
-    else currentExpenses.push({ id: `exp_${Date.now()}`, amount: value, category })
-
-    const totalSpent = currentExpenses.reduce((sum, e) => sum + e.amount, 0)
-    const updatedTrip = { ...activeTrip, expenses: currentExpenses, totalBudget: activeTrip.totalBudget || totalSpent + 1000 }
-    
-    setActiveTrip(updatedTrip)
-    const updatedTrips = trips.map(t => t.id === activeTrip.id ? updatedTrip : t)
-    setTrips(updatedTrips)
-    if (user) {
-      localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updatedTrips))
-      updateTripBudget(activeTrip.id, updatedTrip.totalBudget)
-    }
+    const exps = [...(activeTrip.expenses || [])]
+    const idx = exps.findIndex(e => e.category === cat)
+    if (idx >= 0) exps[idx].amount = val; else exps.push({ id: `exp_${Date.now()}`, amount: val, category: cat })
+    const total = exps.reduce((s, e) => s + e.amount, 0)
+    const updated = { ...activeTrip, expenses: exps, totalBudget: activeTrip.totalBudget || total + 1000 }
+    setActiveTrip(updated)
+    const all = trips.map(t => t.id === activeTrip.id ? updated : t); setTrips(all)
+    if (user) { localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(all)); updateTripBudget(activeTrip.id, updated.totalBudget!) }
   }
 
   const handleBudgetLimitChange = (val: number) => {
     if (!activeTrip) return
-    const updatedTrip = { ...activeTrip, totalBudget: val }
-    setActiveTrip(updatedTrip)
-    const updatedTrips = trips.map(t => t.id === activeTrip.id ? updatedTrip : t)
-    setTrips(updatedTrips)
-    if (user) {
-      localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(updatedTrips))
-      updateTripBudget(activeTrip.id, val)
-    }
+    const updated = { ...activeTrip, totalBudget: val }; setActiveTrip(updated)
+    const all = trips.map(t => t.id === activeTrip.id ? updated : t); setTrips(all)
+    if (user) { localStorage.setItem(`traveloop_trips_${user.id}`, JSON.stringify(all)); updateTripBudget(activeTrip.id, val) }
   }
 
-  // Notes handlers
   const handleAddNote = () => {
     if (!newNoteText.trim() || !activeTrip) return
-    const newNote = { id: `note_${Date.now()}`, content: newNoteText.trim() }
-    const updated = [...notes, newNote]
-    setNotes(updated)
-    setNewNoteText('')
+    const updated = [...notes, { id: `note_${Date.now()}`, content: newNoteText.trim() }]; setNotes(updated); setNewNoteText('')
     localStorage.setItem(`traveloop_notes_${activeTrip.id}`, JSON.stringify(updated))
   }
-
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = (id: string) => {
     if (!activeTrip) return
-    const updated = notes.filter(n => n.id !== noteId)
-    setNotes(updated)
+    const updated = notes.filter(n => n.id !== id); setNotes(updated)
     localStorage.setItem(`traveloop_notes_${activeTrip.id}`, JSON.stringify(updated))
   }
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24 min-h-[50vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-base text-slate-900 font-bold">Loading your trips...</span>
-        </div>
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', flexDirection: 'column', gap: 16 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 20, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Compass size={24} color="#6C63FF" style={{ animation: 'spin 1.5s linear infinite' }} />
       </div>
-    )
-  }
+      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>Loading trips...</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
 
-  // ─────────────────────────────────────────────────────────────
-  // 🎯 DETAILED TRIP VIEW
-  // ─────────────────────────────────────────────────────────────
+  // ── DETAIL VIEW ────────────────────────────────────────────
   if (activeTrip) {
-    const daysDiff = Math.max(1, Math.ceil((new Date(activeTrip.endDate).getTime() - new Date(activeTrip.startDate).getTime()) / (1000 * 60 * 60 * 24)))
+    const daysDiff = Math.max(1, Math.ceil((new Date(activeTrip.endDate).getTime() - new Date(activeTrip.startDate).getTime()) / (1e3 * 60 * 60 * 24)))
     const totalBudget = activeTrip.totalBudget || 15000
-    const expensesList = activeTrip.expenses || []
-    
-    const transportVal = expensesList.find(e => e.category === 'Transport')?.amount || 0
-    const hotelVal = expensesList.find(e => e.category === 'Hotel')?.amount || 0
-    const foodVal = expensesList.find(e => e.category === 'Food')?.amount || 0
-    const activitiesVal = expensesList.find(e => e.category === 'Activities')?.amount || 0
-    const miscVal = expensesList.find(e => e.category === 'Misc')?.amount || 0
-
-    const totalSpent = transportVal + hotelVal + foodVal + activitiesVal + miscVal
-    const dailyAverage = Math.round(totalSpent / daysDiff)
-    const activityBudgetLimit = totalBudget * 0.40
-    const activitiesExceeded = activitiesVal > activityBudgetLimit
-
+    const exps = activeTrip.expenses || []
+    const transportVal    = exps.find(e => e.category === 'Transport')?.amount || 0
+    const hotelVal        = exps.find(e => e.category === 'Hotel')?.amount || 0
+    const foodVal         = exps.find(e => e.category === 'Food')?.amount || 0
+    const activitiesVal   = exps.find(e => e.category === 'Activities')?.amount || 0
+    const miscVal         = exps.find(e => e.category === 'Misc')?.amount || 0
+    const totalSpent      = transportVal + hotelVal + foodVal + activitiesVal + miscVal
+    const dailyAvg        = Math.round(totalSpent / daysDiff)
+    const actBudgetLimit  = totalBudget * .4
+    const actExceeded     = activitiesVal > actBudgetLimit
     const chartData = [
-      { name: 'Transport', value: transportVal, color: '#6366f1' },
-      { name: 'Hotel', value: hotelVal, color: '#8b5cf6' },
-      { name: 'Food', value: foodVal, color: '#10b981' },
-      { name: 'Activities', value: activitiesVal, color: '#f59e0b' },
-      { name: 'Misc', value: miscVal, color: '#f43f5e' }
-    ].filter(item => item.value > 0)
-
-    const hiddenGemsList = activeTrip.smartRecommendations || []
-    const destination = activeTrip.stops?.[0] ? `${activeTrip.stops[0].cityName}, ${activeTrip.stops[0].country}` : 'Custom Location'
+      { name: 'Transport', value: transportVal, color: '#6C63FF' },
+      { name: 'Hotel',     value: hotelVal,     color: '#8B5CF6' },
+      { name: 'Food',      value: foodVal,      color: '#22C55E' },
+      { name: 'Activities',value: activitiesVal, color: '#F59E0B' },
+      { name: 'Misc',      value: miscVal,      color: '#EF4444' },
+    ].filter(d => d.value > 0)
+    const gems = activeTrip.smartRecommendations || []
+    const dest = activeTrip.stops?.[0] ? `${activeTrip.stops[0].cityName}, ${activeTrip.stops[0].country}` : 'Custom Location'
 
     return (
-      <div className="flex flex-col gap-10 max-w-7xl mx-auto pb-12">
-        
-        {/* 🔙 Back Navigation + Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200">
-          <Button
-            variant="ghost"
-            onClick={() => window.location.href = '/dashboard/trips'}
-            className="text-slate-900 hover:text-slate-950 hover:bg-slate-100 font-bold"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Trips
-          </Button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1200, margin: '0 auto', paddingBottom: 48 }}>
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => alert(`Share link: http://traveloop.ai/share/${activeTrip.id}`)}
-              className="border-slate-400 text-slate-900 hover:bg-slate-50 font-bold"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-            <Button
-              onClick={() => alert('Edit mode activated!')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              Edit Itinerary
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(activeTrip.id)}
-              className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-              aria-label="Delete trip"
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
+        {/* Back + Actions */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <button className="neu-btn" onClick={() => { window.location.href = '/dashboard/trips' }} style={{ padding: '10px 20px', color: '#334155' }}>
+            <ArrowLeft size={16} /> Back to Trips
+          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="neu-btn" onClick={() => alert(`Share: traveloop.ai/share/${activeTrip.id}`)} style={{ padding: '10px 18px', color: '#334155' }}><Share2 size={15} /> Share</button>
+            <button className="neu-btn-primary" onClick={() => alert('Edit mode!')} style={{ padding: '10px 18px' }}><Edit3 size={15} /> Edit</button>
+            <button className="neu-btn" onClick={() => handleDelete(activeTrip.id)} style={{ padding: '10px 12px', color: '#94A3B8' }}><Trash2 size={15} /></button>
           </div>
         </div>
 
-        {/* 🖼️ Hero Cover Section */}
-        <Card className="relative overflow-hidden border-slate-200 shadow-lg">
-          <div className="relative h-56 md:h-72">
-            {activeTrip.coverImage ? (
-              <img src={activeTrip.coverImage} alt={activeTrip.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
-                <Compass className="h-16 w-16 text-indigo-300" />
+        {/* Hero Cover */}
+        <NeuCard style={{ padding: 10, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 260, borderRadius: 20, overflow: 'hidden', boxShadow: NEU.pressed }}>
+            {activeTrip.coverImage
+              ? <img src={activeTrip.coverImage} alt={activeTrip.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#DDE4EE' }}><Compass size={48} color="#94A3B8" /></div>
+            }
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.6) 0%, transparent 60%)' }} />
+            <div style={{ position: 'absolute', bottom: 24, left: 24, right: 24, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+              <div>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 999, marginBottom: 10,
+                  background: 'rgba(255,255,255,.7)', backdropFilter: 'blur(8px)',
+                  boxShadow: '4px 4px 10px rgba(163,177,198,.3), -4px -4px 10px rgba(255,255,255,.7)',
+                  fontSize: '0.78rem', fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif',
+                }}><MapPin size={13} /> {dest}</div>
+                <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', color: '#fff', margin: 0, textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>{activeTrip.title}</h1>
+                {activeTrip.description && <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,.8)', marginTop: 6, fontFamily: 'Inter, sans-serif', lineHeight: 1.5 }}>{activeTrip.description}</p>}
               </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent" />
-            
-            {/* Hero Content */}
-            <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="max-w-2xl">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200 text-indigo-700 text-sm font-semibold mb-3">
-                  <MapPin className="h-4 w-4" />
-                  {destination}
-                </span>
-                <h1 className="font-heading font-bold text-3xl md:text-4xl text-white drop-shadow-sm">
-                  {activeTrip.title}
-                </h1>
-                {activeTrip.description && (
-                  <p className="text-base text-slate-200 mt-2 line-clamp-2 leading-relaxed">
-                    {activeTrip.description}
-                  </p>
-                )}
-              </div>
-              
-              {/* Date Badge */}
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/95 backdrop-blur-sm border border-slate-200 shadow-sm">
-                <Calendar className="h-5 w-5 text-indigo-600" />
-                <span className="text-sm font-semibold text-slate-900">
-                  {new Date(activeTrip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(activeTrip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 14,
+                background: 'rgba(255,255,255,.72)', backdropFilter: 'blur(10px)',
+                boxShadow: '4px 4px 10px rgba(163,177,198,.3), -4px -4px 10px rgba(255,255,255,.7)',
+              }}>
+                <Calendar size={15} color="#6C63FF" />
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>
+                  {new Date(activeTrip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(activeTrip.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </NeuCard>
 
-        {/* 🧭 Tab Navigation */}
-        <div className="flex flex-wrap items-center gap-3 pb-2 border-b border-slate-200">
-          <TabButton active={activeTab === 'itinerary'} onClick={() => setActiveTab('itinerary')} icon={Calendar}>
-            Itinerary
-          </TabButton>
-          <TabButton active={activeTab === 'budget'} onClick={() => setActiveTab('budget')} icon={DollarSign}>
-            Budget
-          </TabButton>
-          <TabButton active={activeTab === 'gems'} onClick={() => setActiveTab('gems')} icon={Coffee}>
-            Hidden Gems
-          </TabButton>
-          <TabButton active={activeTab === 'notes'} onClick={() => setActiveTab('notes')} icon={FileText}>
-            Notes
-          </TabButton>
+        {/* Tabs */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          <TabButton active={activeTab === 'itinerary'} onClick={() => setActiveTab('itinerary')} icon={Calendar}>Itinerary</TabButton>
+          <TabButton active={activeTab === 'budget'} onClick={() => setActiveTab('budget')} icon={DollarSign}>Budget</TabButton>
+          <TabButton active={activeTab === 'gems'} onClick={() => setActiveTab('gems')} icon={Coffee}>Hidden Gems</TabButton>
+          <TabButton active={activeTab === 'notes'} onClick={() => setActiveTab('notes')} icon={FileText}>Notes</TabButton>
         </div>
 
-        {/* ─────────────────────────────────────────────────────
-            📅 TAB 1: ITINERARY
-            ───────────────────────────────────────────────────── */}
+        {/* TAB: Itinerary */}
         {activeTab === 'itinerary' && (
-          <div className="flex flex-col gap-8">
-            {activeTrip.itineraryDays && activeTrip.itineraryDays.length > 0 ? (
-              <div className="flex flex-col gap-6">
-                {activeTrip.itineraryDays.map((day: any) => (
-                  <Card key={day.day} className="border-slate-200 shadow-sm">
-                    <CardContent className="p-6">
-                      {/* Day Header */}
-                      <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-10 h-10 rounded-xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center text-base font-bold text-indigo-700">
-                            {day.day}
-                          </span>
-                          <span className="text-lg font-semibold text-slate-900">Day {day.day} Schedule</span>
-                        </div>
-                        <span className="text-sm font-bold text-slate-850">
-                          Daily Spend: <span className="font-bold text-indigo-700">{currencySymbol}{day.totalSpent}</span>
-                        </span>
-                      </div>
-
-                      {/* Activities Timeline */}
-                      <div className="flex flex-col gap-4 relative pl-2">
-                        {day.activities.map((act: any, idx: number) => (
-                          <ActivityItem key={idx} activity={act} currency={currencySymbol} />
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="bg-slate-50 border-slate-200 rounded-2xl p-10 text-center">
-                <Compass className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="font-heading font-semibold text-xl text-slate-900 mb-2">No itinerary yet</h3>
-                <p className="text-base text-slate-850 mb-4 font-semibold">Add activities to build your day-by-day travel plan.</p>
-                <Button className="bg-indigo-600 hover:bg-indigo-500">Add First Activity</Button>
-              </Card>
-            )}
-
-            {/* Smart Recommendations */}
-            {hiddenGemsList.length > 0 && (
-              <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200">
-                <CardContent className="p-6">
-                  <h4 className="font-heading font-bold text-xl text-slate-900 flex items-center gap-2 mb-4">
-                    <Sparkles className="h-5 w-5 text-indigo-600" />
-                    AI-Powered Recommendations
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {hiddenGemsList.map((gem: any, idx: number) => (
-                      <Card key={idx} className="bg-white border-slate-200 rounded-xl p-5">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">{gem.type || 'Hidden Gem'}</span>
-                          <div className="flex items-center gap-1 text-amber-500">
-                            <Star className="h-4 w-4 fill-current" />
-                            <span className="font-bold text-slate-700 text-sm">{gem.rating}</span>
-                          </div>
-                        </div>
-                        <h5 className="text-base font-bold text-slate-900 mb-2">{gem.name}</h5>
-                        <p className="text-sm text-slate-850 leading-relaxed font-medium">{gem.desc}</p>
-                      </Card>
-                    ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {activeTrip.itineraryDays?.length ? activeTrip.itineraryDays.map(day => (
+              <NeuCard key={day.day}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid rgba(163,177,198,.15)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 14, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#6C63FF' }}>{day.day}</div>
+                    <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#1E293B' }}>Day {day.day} Schedule</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <span style={{ fontSize: '0.85rem', fontFamily: 'Inter, sans-serif', color: '#94A3B8' }}>Daily: <strong style={{ color: '#6C63FF' }}>{currencySymbol}{day.totalSpent}</strong></span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {day.activities.map((a: any, i: number) => <ActivityItem key={i} activity={a} currency={currencySymbol} />)}
+                </div>
+              </NeuCard>
+            )) : (
+              <NeuCard style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+                <Compass size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 8px' }}>No itinerary yet</h3>
+                <p style={{ color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>Add activities to build your plan.</p>
+              </NeuCard>
+            )}
+            {gems.length > 0 && (
+              <NeuCard>
+                <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 16px' }}>
+                  <Sparkles size={18} color="#6C63FF" /> AI Recommendations
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 14 }}>
+                  {gems.map((g: any, i: number) => <HiddenGemCard key={i} gem={g} />)}
+                </div>
+              </NeuCard>
             )}
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────
-            💰 TAB 2: BUDGET DASHBOARD
-            ───────────────────────────────────────────────────── */}
+        {/* TAB: Budget */}
         {activeTab === 'budget' && (
-          <div className="flex flex-col gap-8">
-            
-            {/* Budget Alert */}
-            {activitiesExceeded && (
-              <Card className="bg-red-50 border-red-200">
-                <CardContent className="p-4 flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {actExceeded && (
+              <NeuCard style={{ background: NEU.BG, boxShadow: 'inset 4px 4px 10px rgba(239,68,68,.15), inset -4px -4px 10px rgba(255,255,255,.8)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <AlertTriangle size={20} color="#EF4444" style={{ flexShrink: 0, marginTop: 2 }} />
                   <div>
-                    <span className="text-sm font-bold text-red-800 uppercase tracking-wide">Budget Alert</span>
-                    <p className="text-sm text-red-700 mt-1">
-                      Activity spending ({currencySymbol}{activitiesVal.toLocaleString()}) exceeds 40% of your total budget ({currencySymbol}{activityBudgetLimit.toLocaleString()}). Consider adjusting other categories.
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>Budget Alert</span>
+                    <p style={{ fontSize: '0.85rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>
+                      Activities ({currencySymbol}{activitiesVal.toLocaleString()}) exceeds 40% of budget ({currencySymbol}{actBudgetLimit.toLocaleString()}).
                     </p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </NeuCard>
             )}
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Total Budget</span>
-                    <DollarSign className="h-5 w-5 text-indigo-600" />
+            {/* Stat tiles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              {[
+                { label: 'Total Budget', icon: DollarSign, accent: '#6C63FF', editable: true, value: totalBudget },
+                { label: 'Daily Average', icon: TrendingUp, accent: '#22C55E', value: dailyAvg, sub: `Over ${daysDiff} days` },
+                { label: 'Activities', icon: Star, accent: '#F59E0B', value: activitiesVal, exceeded: actExceeded, sub: `Limit: ${currencySymbol}${actBudgetLimit.toLocaleString()}` },
+              ].map((s, i) => (
+                <div key={i} style={{ background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none', padding: '1.25rem 1.5rem', minHeight: 120, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{s.label}</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 12, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.accent }}><s.icon size={17} /></div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-slate-900">{currencySymbol}</span>
-                    <Input 
-                      type="number"
-                      value={totalBudget}
-                      onChange={(e) => handleBudgetLimitChange(parseFloat(e.target.value) || 0)}
-                      className="h-8 w-32 text-xl font-bold text-slate-950 border-0 border-b border-dashed border-slate-350 focus:border-indigo-500 focus:ring-0 p-0 bg-transparent"
-                    />
+                  <div>
+                    {s.editable ? (
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                        <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#1E293B' }}>{currencySymbol}</span>
+                        <input type="number" value={s.value} onChange={e => handleBudgetLimitChange(parseFloat(e.target.value) || 0)}
+                          style={{ width: 110, background: 'transparent', border: 'none', borderBottom: '2px dashed rgba(163,177,198,.4)', outline: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#1E293B', padding: 0 }} />
+                      </div>
+                    ) : (
+                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: s.exceeded ? '#EF4444' : '#1E293B' }}>{currencySymbol}{s.value.toLocaleString()}</div>
+                    )}
+                    {s.sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, fontFamily: 'Inter, sans-serif' }}>{s.sub}</div>}
                   </div>
-                  <span className="text-xs text-slate-500 mt-2 block">Editable budget limit</span>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Daily Average</span>
-                    <TrendingUp className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-slate-900">{currencySymbol}{dailyAverage.toLocaleString()}</span>
-                    <span className="text-sm text-slate-500">/ day</span>
-                  </div>
-                  <span className="text-xs text-slate-500 mt-2 block">Over {daysDiff} days</span>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Activities Spent</span>
-                    <Star className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-2xl font-bold ${activitiesExceeded ? 'text-red-600' : 'text-slate-900'}`}>
-                      {currencySymbol}{activitiesVal.toLocaleString()}
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500 mt-2 block">Limit: {currencySymbol}{activityBudgetLimit.toLocaleString()} (40%)</span>
-                </CardContent>
-              </Card>
+                </div>
+              ))}
             </div>
 
-            {/* Budget Breakdown + Chart */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              
-              {/* Editable Expense Inputs */}
-              <Card className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-6">
-                  <h3 className="font-heading font-bold text-xl text-slate-900 mb-1">Expense Breakdown</h3>
-                  <p className="text-base text-slate-600 mb-6">Edit category values to adjust your budget plan.</p>
-                  
-                  <div className="flex flex-col">
-                    <ExpenseRow label="Transport" description="Flights, trains, car rental" value={transportVal} onChange={(v) => handleExpenseChange('Transport', v)} currency={currencySymbol} color="indigo" />
-                    <ExpenseRow label="Accommodation" description="Hotels, resorts, homestays" value={hotelVal} onChange={(v) => handleExpenseChange('Hotel', v)} currency={currencySymbol} color="violet" />
-                    <ExpenseRow label="Food & Dining" description="Restaurants, cafes, street food" value={foodVal} onChange={(v) => handleExpenseChange('Food', v)} currency={currencySymbol} color="emerald" />
-                    <ExpenseRow label="Activities" description="Tours, tickets, experiences" value={activitiesVal} onChange={(v) => handleExpenseChange('Activities', v)} currency={currencySymbol} color="amber" />
-                    <ExpenseRow label="Miscellaneous" description="Shopping, tips, emergencies" value={miscVal} onChange={(v) => handleExpenseChange('Misc', v)} currency={currencySymbol} color="rose" />
-                  </div>
+            {/* Expense + Chart */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <NeuCard>
+                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', margin: '0 0 6px' }}>Expense Breakdown</h3>
+                <p style={{ fontSize: '0.85rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginBottom: 20 }}>Edit category values below.</p>
+                <ExpenseRow label="Transport" description="Flights, trains, car" value={transportVal} onChange={v => handleExpenseChange('Transport', v)} currency={currencySymbol} />
+                <ExpenseRow label="Accommodation" description="Hotels, resorts" value={hotelVal} onChange={v => handleExpenseChange('Hotel', v)} currency={currencySymbol} />
+                <ExpenseRow label="Food & Dining" description="Restaurants, cafes" value={foodVal} onChange={v => handleExpenseChange('Food', v)} currency={currencySymbol} />
+                <ExpenseRow label="Activities" description="Tours, tickets" value={activitiesVal} onChange={v => handleExpenseChange('Activities', v)} currency={currencySymbol} />
+                <ExpenseRow label="Miscellaneous" description="Shopping, tips" value={miscVal} onChange={v => handleExpenseChange('Misc', v)} currency={currencySymbol} />
+                <div style={{ marginTop: 20, padding: '12px 16px', borderRadius: 16, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>Total:</span>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.15rem', color: '#6C63FF' }}>{currencySymbol}{totalSpent.toLocaleString()}</span>
+                </div>
+              </NeuCard>
 
-                  {/* Total Summary */}
-                  <div className="mt-6 p-4 bg-slate-50 rounded-xl flex items-center justify-between">
-                    <span className="text-base font-bold text-slate-900">Total Calculated:</span>
-                    <span className="text-xl font-bold text-indigo-700">{currencySymbol}{totalSpent.toLocaleString()}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Pie Chart Visualization */}
-              <Card className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-6">
-                  <h3 className="font-heading font-bold text-xl text-slate-900 mb-1">Budget Distribution</h3>
-                  <p className="text-base text-slate-850 mb-6 font-medium">Visual breakdown of your spending categories.</p>
-                  
-                  <div className="h-64 flex items-center justify-center">
-                    {chartData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={chartData}
-                            dataKey="value"
-                            nameKey="name"
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            innerRadius={50}
-                            paddingAngle={2}
-                          >
-                            {chartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            contentStyle={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                            itemStyle={{ fontSize: '14px', color: '#1e293b' }}
-                            formatter={(value: any) => `${currencySymbol}${value?.toLocaleString() || ''}`}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="text-center text-slate-500">
-                        <PieChartIcon className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-base">Add expenses to see the distribution chart</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex flex-wrap justify-center gap-4 mt-4 pt-4 border-t border-slate-100">
-                    {chartData.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-slate-805 font-bold">{item.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
+              <NeuCard>
+                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', margin: '0 0 6px' }}>Budget Distribution</h3>
+                <p style={{ fontSize: '0.85rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginBottom: 20 }}>Visual spending breakdown.</p>
+                <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={50} paddingAngle={2}>
+                          {chartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                        </Pie>
+                        <Tooltip contentStyle={{ background: NEU.BG, border: 'none', borderRadius: 16, boxShadow: NEU.raised }} formatter={(v: any) => `${currencySymbol}${v?.toLocaleString()}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ textAlign: 'center' }}>
+                      <PieChartIcon size={40} color="#94A3B8" style={{ margin: '0 auto 8px' }} />
+                      <p style={{ color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem' }}>Add expenses to see chart</p>
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14, marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(163,177,198,.15)' }}>
+                  {chartData.map((d, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color }} />
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>{d.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </NeuCard>
             </div>
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────
-            💎 TAB 3: HIDDEN GEMS
-            ───────────────────────────────────────────────────── */}
+        {/* TAB: Gems */}
         {activeTab === 'gems' && (
-          <div className="flex flex-col gap-6">
-            <div className="mb-2">
-              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
-                <Coffee className="h-6 w-6 text-indigo-600" />
-                Hidden Gems in {activeTrip.stops?.[0]?.cityName || 'Your Destination'}
-              </h2>
-              <p className="text-base text-slate-850 mt-2 font-medium">Off-the-beaten-path recommendations from locals and travelers.</p>
-            </div>
-
-            {hiddenGemsList.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {hiddenGemsList.map((gem: any, index: number) => (
-                  <HiddenGemCard key={index} gem={gem} />
-                ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div><h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}><Coffee size={20} color="#6C63FF" /> Hidden Gems in {activeTrip.stops?.[0]?.cityName || 'Your Destination'}</h2></div>
+            {gems.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+                {gems.map((g: any, i: number) => <HiddenGemCard key={i} gem={g} />)}
               </div>
             ) : (
-              <Card className="bg-slate-50 border-slate-200 rounded-2xl p-10 text-center">
-                <Coffee className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="font-heading font-semibold text-xl text-slate-900 mb-2">No hidden gems yet</h3>
-                <p className="text-base text-slate-600">Our AI will suggest local favorites once your itinerary is more detailed.</p>
-              </Card>
+              <NeuCard style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+                <Coffee size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+                <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 8px' }}>No hidden gems yet</h3>
+                <p style={{ color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>AI will suggest local favorites once your itinerary is detailed.</p>
+              </NeuCard>
             )}
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────
-            📝 TAB 4: NOTES
-            ───────────────────────────────────────────────────── */}
+        {/* TAB: Notes */}
         {activeTab === 'notes' && (
-          <div className="flex flex-col gap-6 max-w-3xl">
-            <div className="mb-2">
-              <h2 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
-                <FileText className="h-6 w-6 text-indigo-600" />
-                Trip Notes
-              </h2>
-              <p className="text-base text-slate-600 mt-2">Jot down reminders, contacts, ticket numbers, or packing lists.</p>
-            </div>
-
-            {/* Add Note Input */}
-            <div className="flex items-center gap-3">
-              <Input 
-                placeholder="Type a new note and press Enter..."
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 700 }}>
+            <div><h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}><FileText size={20} color="#6C63FF" /> Trip Notes</h2></div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                placeholder="Type a note and press Enter..."
                 value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                className="flex-1 text-base py-3 h-12 border-slate-350 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 bg-white"
+                onChange={e => setNewNoteText(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddNote()}
+                style={{
+                  flex: 1, padding: '12px 18px', borderRadius: 16, border: 'none', outline: 'none',
+                  background: NEU.BG, boxShadow: NEU.input, fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#1E293B',
+                }}
               />
-              <Button onClick={handleAddNote} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6">
-                Add
-              </Button>
+              <button className="neu-btn-primary" onClick={handleAddNote} style={{ padding: '12px 24px' }}>Add</button>
             </div>
-
-            {/* Notes List */}
-            <div className="flex flex-col gap-3">
-              {notes.length > 0 ? (
-                notes.map((note) => (
-                  <NoteItem key={note.id} note={note} onDelete={handleDeleteNote} />
-                ))
-              ) : (
-                <Card className="bg-slate-50 border-slate-200 rounded-xl p-8 text-center">
-                  <FileText className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-                  <p className="text-base text-slate-600">No notes yet. Start by adding your first reminder above!</p>
-                </Card>
-              )}
-            </div>
+            {notes.length > 0 ? notes.map(n => <NoteItem key={n.id} note={n} onDelete={handleDeleteNote} />) : (
+              <NeuCard style={{ textAlign: 'center', padding: '2rem' }}>
+                <FileText size={32} color="#94A3B8" style={{ margin: '0 auto 8px' }} />
+                <p style={{ color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>No notes yet. Add your first reminder!</p>
+              </NeuCard>
+            )}
           </div>
         )}
-
       </div>
     )
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // 🎯 TRIPS LISTING VIEW
-  // ─────────────────────────────────────────────────────────────
+  // ── LISTING VIEW ────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-10 max-w-7xl mx-auto pb-12">
-      
-      {/* 🧭 Header */}
-      <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1200, margin: '0 auto', paddingBottom: 48 }}>
+
+      {/* Header */}
+      <section style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 className="font-heading font-bold text-4xl text-slate-900 tracking-tight">My Trips ✈️</h1>
-          <p className="text-lg text-slate-600 mt-2">Manage your travel itineraries, AI-generated plans, and custom adventures.</p>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', color: '#1E293B', margin: 0 }}>My Trips ✈️</h1>
+          <p style={{ fontSize: '0.9rem', color: '#64748B', marginTop: 8, fontFamily: 'Inter, sans-serif' }}>Manage your itineraries, AI plans, and custom adventures.</p>
         </div>
-        <Button 
-          onClick={handleCreateManualTrip}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl shadow-md shadow-indigo-200/50"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Create New Trip
-        </Button>
+        <button className="neu-btn-primary" onClick={handleCreateManualTrip} style={{ padding: '14px 24px' }}>
+          <Plus size={17} /> Create New Trip
+        </button>
       </section>
 
-      {/* 📋 Trips Grid or Empty State */}
+      {/* Grid */}
       {trips.length === 0 ? (
-        <Card className="bg-slate-50 border-slate-200 border-dashed rounded-3xl p-12 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-100 flex items-center justify-center mb-5">
-            <Compass className="h-8 w-8 text-indigo-600" />
+        <NeuCard style={{ textAlign: 'center', padding: '3.5rem 2rem' }}>
+          <div style={{ width: 72, height: 72, borderRadius: 24, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <Compass size={32} color="#6C63FF" />
           </div>
-          <h3 className="font-heading font-bold text-2xl text-slate-900 mb-3">No trips planned yet</h3>
-          <p className="text-lg text-slate-600 max-w-md mx-auto mb-6">
-            Start your travel planning journey by creating an AI-powered itinerary or building a custom trip from scratch.
+          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.3rem', color: '#1E293B', margin: '0 0 8px' }}>No trips planned yet</h3>
+          <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: 24, fontFamily: 'Inter, sans-serif', maxWidth: 400, margin: '0 auto 24px' }}>
+            Create an AI itinerary or build a custom trip from scratch.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button onClick={() => window.location.href = '/dashboard/ai-planner'} className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3">
-              <Sparkles className="h-5 w-5 mr-2" />
-              Use AI Planner
-            </Button>
-            <Button variant="outline" onClick={handleCreateManualTrip} className="border-slate-400 text-slate-900 hover:bg-slate-50 font-bold px-6 py-3">
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14 }}>
+            <button className="neu-btn-primary" onClick={() => { window.location.href = '/dashboard/ai-planner' }} style={{ padding: '12px 24px' }}>
+              <Sparkles size={16} /> Use AI Planner
+            </button>
+            <button className="neu-btn" onClick={handleCreateManualTrip} style={{ padding: '12px 24px', color: '#334155' }}>
               Create Manual Trip
-            </Button>
+            </button>
           </div>
-        </Card>
+        </NeuCard>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {trips.map((trip) => (
-            <TripCard 
-              key={trip.id} 
-              trip={trip} 
-              onClick={() => window.location.href = `/dashboard/trips?id=${trip.id}`}
-              onDelete={(e) => { e.stopPropagation(); handleDelete(trip.id) }}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
+          {trips.map(t => (
+            <TripCard
+              key={t.id}
+              trip={t}
+              onClick={() => { window.location.href = `/dashboard/trips?id=${t.id}` }}
+              onDelete={e => { e.stopPropagation(); handleDelete(t.id) }}
               currency={currencySymbol}
             />
           ))}
         </div>
       )}
 
-      {/* 💡 Quick Tips Card */}
-      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 rounded-2xl p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-            <Sparkles className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-slate-900 mb-1">Pro Tip</h4>
-            <p className="text-base text-slate-600">
-              Use the <span className="font-bold text-indigo-750">Budget</span> tab to adjust spending categories in real-time, and the <span className="font-bold text-indigo-750">Notes</span> tab to keep important travel details handy!
-            </p>
-          </div>
+      {/* Pro tip */}
+      <NeuCard style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Sparkles size={20} color="#6C63FF" />
         </div>
-      </Card>
-
+        <div>
+          <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 6px', fontSize: '1rem' }}>Pro Tip</h4>
+          <p style={{ color: '#94A3B8', fontSize: '0.85rem', fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}>
+            Use the <strong style={{ color: '#6C63FF' }}>Budget</strong> tab to adjust spending in real-time, and <strong style={{ color: '#6C63FF' }}>Notes</strong> to keep travel details handy!
+          </p>
+        </div>
+      </NeuCard>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🚀 Main Export with Suspense Boundary
+// Export with Suspense
 // ─────────────────────────────────────────────────────────────
-
 export default function MyTripsPage() {
   return (
     <Suspense fallback={
-      <div className="flex justify-center items-center py-24 min-h-[50vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin" />
-          <span className="text-base text-slate-900 font-bold">Loading trips...</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', flexDirection: 'column', gap: 16 }}>
+        <div style={{ width: 56, height: 56, borderRadius: 20, background: '#EAEFF5', boxShadow: 'inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Compass size={24} color="#6C63FF" style={{ animation: 'spin 1.5s linear infinite' }} />
         </div>
+        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#94A3B8' }}>Loading trips...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     }>
       <TripsPageInner />

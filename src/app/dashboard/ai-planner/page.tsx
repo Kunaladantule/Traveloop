@@ -2,147 +2,230 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { 
-  Sparkles, MapPin, Calendar, ArrowRight, ArrowLeft, Compass, 
-  Star, DollarSign, Users, Activity, Utensils, Clock, Check, 
-  Search, Briefcase, Flower2, Landmark, Leaf, Moon, User, 
+import {
+  Sparkles, MapPin, Calendar, ArrowRight, ArrowLeft, Compass,
+  Star, DollarSign, Users, Activity, Utensils, Clock, Check,
+  Search, Briefcase, Flower2, Landmark, Leaf, Moon, User,
   Heart, Home, Wine, Loader2
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { generateGeminiItinerary } from '@/app/actions/gemini'
 import { getGooglePlaceSuggestions, getGoogleMapsApiKey, PlacePrediction } from '@/app/actions/googlePlaces'
 import { GoogleMapWidget } from '@/components/GoogleMapWidget'
 
 // ─────────────────────────────────────────────────────────────
-// 🎨 Travel Vibes & Companions (With Icons)
+// Shared Neumorphic tokens
+// ─────────────────────────────────────────────────────────────
+const NEU = {
+  BG:     '#EAEFF5',
+  raised: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+  hover:  '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
+  pressed:'inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.85)',
+  input:  'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+}
+
+// ─────────────────────────────────────────────────────────────
+// Data
 // ─────────────────────────────────────────────────────────────
 const VIBES = [
-  { id: 'Adventure', label: 'Adventure', desc: 'Thrilling treks and outdoor action' },
-  { id: 'Relaxation', label: 'Relaxation', desc: 'Resorts, spas, and peaceful getaways' },
-  { id: 'Culture', label: 'Culture', desc: 'Museums, historic tours, and heritage' },
-  { id: 'Food', label: 'Foodie', desc: 'Fine dining, street markets, and tasting' },
-  { id: 'Nature', label: 'Nature', desc: 'Parks, mountains, and wildlife scenic tours' },
-  { id: 'Night Life', label: 'Nightlife', desc: 'Clubs, bars, and evening entertainment' },
-  { id: 'Family', label: 'Family', desc: 'Kid-friendly places and group activities' }
+  { id: 'Adventure',   label: 'Adventure',   icon: Compass,   desc: 'Thrilling treks & outdoor action' },
+  { id: 'Relaxation',  label: 'Relaxation',  icon: Flower2,   desc: 'Resorts, spas & peaceful stays' },
+  { id: 'Culture',     label: 'Culture',     icon: Landmark,  desc: 'Museums, heritage & historic tours' },
+  { id: 'Food',        label: 'Foodie',      icon: Utensils,  desc: 'Fine dining, street markets & tasting' },
+  { id: 'Nature',      label: 'Nature',      icon: Leaf,      desc: 'Parks, mountains & wildlife' },
+  { id: 'Night Life',  label: 'Nightlife',   icon: Moon,      desc: 'Clubs, bars & evening entertainment' },
+  { id: 'Family',      label: 'Family',      icon: Users,     desc: 'Kid-friendly places & group fun' },
 ]
-
-const VIBE_ICONS: Record<string, React.ComponentType<any>> = {
-  Adventure: Compass, Relaxation: Flower2, Culture: Landmark,
-  Food: Utensils, Nature: Leaf, 'Night Life': Moon, Family: Users
-}
 
 const COMPANIONS = [
-  { id: 'Solo', label: 'Solo Traveler' },
-  { id: 'Couple', label: 'Romantic Couple' },
-  { id: 'Family', label: 'Family Trip' },
-  { id: 'Friends', label: 'Friends Getaway' }
+  { id: 'Solo',    label: 'Solo Traveler',   icon: User  },
+  { id: 'Couple',  label: 'Romantic Couple', icon: Heart },
+  { id: 'Family',  label: 'Family Trip',     icon: Home  },
+  { id: 'Friends', label: 'Friends Getaway', icon: Wine  },
 ]
 
-const COMPANION_ICONS: Record<string, React.ComponentType<any>> = {
-  Solo: User, Couple: Heart, Family: Home, Friends: Wine
-}
-
 // ─────────────────────────────────────────────────────────────
-// 🧩 Reusable Components (Light Theme + Larger Text)
+// Stepper
 // ─────────────────────────────────────────────────────────────
-
-const StepBadge = ({ step, current, label }: { step: number; current: number; label: string }) => {
-  const isActive = current >= step
-  const isCurrent = current === step
-  
+const Stepper = ({ current }: { current: number }) => {
+  const steps = ['Destination', 'Preferences', 'Generate']
   return (
-    <div className={`flex items-center gap-2 transition-colors ${isActive ? 'text-indigo-700' : 'text-slate-400'}`}>
-      <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-        isCurrent 
-          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
-          : isActive 
-            ? 'bg-indigo-100 text-indigo-700' 
-            : 'bg-slate-100 text-slate-500'
-      }`}>
-        {isActive && !isCurrent ? <Check className="h-4 w-4" /> : step}
-      </span>
-      <span className={`text-base font-semibold ${isActive ? 'text-slate-900' : 'text-slate-600'}`}>
-        {label}
-      </span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 999, background: NEU.BG, boxShadow: NEU.raised }}>
+      {steps.map((label, i) => {
+        const idx = i + 1
+        const isActive   = idx === current
+        const isComplete = idx < current
+        return (
+          <React.Fragment key={label}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: '0.8rem',
+                background: isActive ? 'linear-gradient(135deg, #6C63FF, #8B5CF6)' : NEU.BG,
+                color: isActive ? '#fff' : isComplete ? '#6C63FF' : '#94A3B8',
+                boxShadow: isActive
+                  ? '4px 4px 10px rgba(108,99,255,.35), -2px -2px 6px rgba(255,255,255,.5)'
+                  : NEU.pressed,
+                transition: 'all .3s ease',
+              }}>
+                {isComplete ? <Check size={14} /> : idx}
+              </div>
+              <span style={{
+                fontFamily: 'Inter, sans-serif', fontWeight: isActive ? 700 : 500,
+                fontSize: '0.85rem',
+                color: isActive ? '#1E293B' : isComplete ? '#6C63FF' : '#94A3B8',
+              }}>{label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ width: 28, height: 2, borderRadius: 2, background: NEU.BG, boxShadow: NEU.pressed, margin: '0 4px' }} />
+            )}
+          </React.Fragment>
+        )
+      })}
     </div>
   )
 }
 
-const VibeButton = ({ 
-  vibe, selected, onSelect 
-}: { 
-  vibe: typeof VIBES[0]; selected: boolean; onSelect: () => void 
-}) => {
-  const Icon = VIBE_ICONS[vibe.id] || Compass
-  
+// ─────────────────────────────────────────────────────────────
+// Vibe Button (neumorphic selection toggle)
+// ─────────────────────────────────────────────────────────────
+const VibeButton = ({ vibe, selected, onSelect }: { vibe: typeof VIBES[0]; selected: boolean; onSelect: () => void }) => {
+  const Icon = vibe.icon
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`py-4 px-3 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center min-h-[100px] ${
-        selected 
-          ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
-          : 'bg-white border-slate-300 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50/50'
-      }`}
+      style={{
+        padding: '18px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+        background: NEU.BG, minHeight: 110, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center',
+        fontFamily: 'Inter, sans-serif', transition: 'all .3s ease',
+        boxShadow: selected
+          ? `inset 4px 4px 10px rgba(108,99,255,.2), inset -4px -4px 10px rgba(255,255,255,.8), 0 0 0 2px rgba(108,99,255,.4)`
+          : NEU.raised,
+        transform: selected ? 'scale(.97)' : 'scale(1)',
+      }}
+      onMouseEnter={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'
+      }}
+      onMouseLeave={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'
+      }}
     >
-      <Icon className={`h-7 w-7 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-500'}`} />
-      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-950'}`}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: NEU.BG, boxShadow: selected ? NEU.raised : NEU.pressed,
+        color: selected ? '#6C63FF' : '#94A3B8', transition: 'all .3s ease',
+      }}>
+        <Icon size={22} />
+      </div>
+      <span style={{ fontWeight: 700, fontSize: '0.8rem', color: selected ? '#6C63FF' : '#334155', lineHeight: 1.2 }}>
         {vibe.label}
       </span>
     </button>
   )
 }
 
-const CompanionButton = ({ 
-  item, selected, onSelect 
-}: { 
-  item: typeof COMPANIONS[0]; selected: boolean; onSelect: () => void 
-}) => {
-  const Icon = COMPANION_ICONS[item.id] || User
-  
+// ─────────────────────────────────────────────────────────────
+// Companion Button
+// ─────────────────────────────────────────────────────────────
+const CompanionButton = ({ item, selected, onSelect }: { item: typeof COMPANIONS[0]; selected: boolean; onSelect: () => void }) => {
+  const Icon = item.icon
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`py-4 px-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-3 text-center min-h-[110px] ${
-        selected 
-          ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-md shadow-indigo-100' 
-          : 'bg-white border-slate-300 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50/50'
-      }`}
+      style={{
+        padding: '20px 16px', borderRadius: 20, border: 'none', cursor: 'pointer',
+        background: NEU.BG, minHeight: 120, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center',
+        fontFamily: 'Inter, sans-serif', transition: 'all .3s ease',
+        boxShadow: selected
+          ? `inset 4px 4px 10px rgba(108,99,255,.2), inset -4px -4px 10px rgba(255,255,255,.8), 0 0 0 2px rgba(108,99,255,.4)`
+          : NEU.raised,
+        transform: selected ? 'scale(.97)' : 'scale(1)',
+      }}
+      onMouseEnter={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'
+      }}
+      onMouseLeave={e => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'
+      }}
     >
-      <Icon className={`h-8 w-8 transition-colors ${selected ? 'text-indigo-600' : 'text-slate-700'}`} />
-      <span className={`text-base font-bold leading-tight ${selected ? 'text-indigo-900' : 'text-slate-950'}`}>
+      <div style={{
+        width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: NEU.BG, boxShadow: selected ? NEU.raised : NEU.pressed,
+        color: selected ? '#6C63FF' : '#94A3B8', transition: 'all .3s ease',
+      }}>
+        <Icon size={24} />
+      </div>
+      <span style={{ fontWeight: 700, fontSize: '0.85rem', color: selected ? '#6C63FF' : '#334155' }}>
         {item.label}
       </span>
     </button>
   )
 }
 
-const StatCard = ({ label, value, sublabel, icon: Icon, color }: {
-  label: string; value: string; sublabel: string; icon: React.ElementType; color: string
+// ─────────────────────────────────────────────────────────────
+// Neu Input
+// ─────────────────────────────────────────────────────────────
+const NeuInput = ({ placeholder, value, onChange, type = 'text', icon: Icon, prefix, style: extraStyle = {}, ...rest }: {
+  placeholder: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  type?: string; icon?: React.ElementType; prefix?: string; style?: React.CSSProperties; [key: string]: any
 }) => (
-  <div className={`flex flex-col bg-white px-5 py-3.5 rounded-xl border border-slate-200 min-w-[120px] shadow-sm`}>
-    <span className="text-xs font-semibold text-slate-750 uppercase tracking-wide flex items-center gap-1.5">
-      <Icon className={`h-3.5 w-3.5 ${color}`} />
-      {label}
-    </span>
-    <span className="text-lg font-bold text-slate-900 mt-1">{value}</span>
-    {sublabel && <span className="text-[11px] text-slate-700 mt-0.5">{sublabel}</span>}
+  <div style={{ position: 'relative', ...extraStyle }}>
+    {Icon && <Icon size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#6C63FF', pointerEvents: 'none', zIndex: 1 }} />}
+    {prefix && <span style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#6C63FF', fontWeight: 800, fontSize: '1rem', pointerEvents: 'none' }}>{prefix}</span>}
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      style={{
+        width: '100%',
+        paddingLeft: (Icon || prefix) ? 48 : 18, paddingRight: 18, paddingTop: 16, paddingBottom: 16,
+        background: NEU.BG, borderRadius: 16, border: 'none', outline: 'none',
+        fontSize: '1rem', color: '#1E293B', fontFamily: 'Inter, sans-serif',
+        boxShadow: NEU.input, transition: 'box-shadow .25s ease',
+      }}
+      onFocus={e => { e.currentTarget.style.boxShadow = `${NEU.input}, 0 0 0 2px rgba(108,99,255,.25)` }}
+      onBlur={e => { e.currentTarget.style.boxShadow = NEU.input }}
+      {...rest}
+    />
   </div>
 )
 
 // ─────────────────────────────────────────────────────────────
-// 🚀 Main AI Planner Page Component
+// Section Card
 // ─────────────────────────────────────────────────────────────
+const NeuCard = ({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{ background: NEU.BG, borderRadius: 28, boxShadow: NEU.raised, border: 'none', padding: '2rem 2.25rem', ...style }}>
+    {children}
+  </div>
+)
 
+// ─────────────────────────────────────────────────────────────
+// Result Stat Card
+// ─────────────────────────────────────────────────────────────
+const ResultStat = ({ label, value, icon: Icon, accent }: { label: string; value: string; icon: React.ElementType; accent: string }) => (
+  <div style={{ background: NEU.BG, borderRadius: 20, boxShadow: NEU.raised, border: 'none', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 11, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', color: accent }}>
+        <Icon size={15} />
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{label}</span>
+    </div>
+    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#1E293B' }}>{value}</div>
+  </div>
+)
+
+// ─────────────────────────────────────────────────────────────
+// Main Page
+// ─────────────────────────────────────────────────────────────
 export default function AiPlannerPage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [userCountry, setUserCountry] = useState('United States')
   const [currencySymbol, setCurrencySymbol] = useState('$')
-  
-  // Form states
+
   const [destination, setDestination] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [numberOfDays, setNumberOfDays] = useState('')
@@ -150,7 +233,6 @@ export default function AiPlannerPage() {
   const [selectedVibe, setSelectedVibe] = useState('')
   const [companion, setCompanion] = useState('')
 
-  // Google places autocomplete
   const [googleSuggestions, setGoogleSuggestions] = useState<PlacePrediction[]>([])
   const [googleMapsKey, setGoogleMapsKey] = useState('')
 
@@ -159,38 +241,31 @@ export default function AiPlannerPage() {
 
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
-  // Load Google Maps API key
   useEffect(() => {
-    getGoogleMapsApiKey().then(key => setGoogleMapsKey(key)).catch(err => console.error(err))
+    getGoogleMapsApiKey().then(k => setGoogleMapsKey(k)).catch(console.error)
   }, [])
-  
-  // Load user preferences & setup outside click handler
+
   useEffect(() => {
-    const userStr = localStorage.getItem('traveloop_user')
-    if (userStr) {
+    const raw = localStorage.getItem('traveloop_user')
+    if (raw) {
       try {
-        const u = JSON.parse(userStr)
+        const u = JSON.parse(raw)
         if (u.country) {
           setUserCountry(u.country)
           const c = u.country.toLowerCase()
           if (c.includes('india')) setCurrencySymbol('₹')
           else if (c.includes('united kingdom') || c.includes('uk')) setCurrencySymbol('£')
           else if (c.includes('france') || c.includes('germany') || c.includes('italy') || c.includes('spain') || c.includes('europe') || c.includes('switzerland')) setCurrencySymbol('€')
-          else if (c.includes('united arab emirates') || c.includes('uae') || c.includes('dubai') || c.includes('emirates')) setCurrencySymbol('AED')
+          else if (c.includes('united arab emirates') || c.includes('uae') || c.includes('dubai')) setCurrencySymbol('AED')
           else setCurrencySymbol('$')
         }
-      } catch (e) {
-        console.error('Error fetching user metadata:', e)
-      }
+      } catch { /* no-op */ }
     }
-
-    function handleClickOutside(event: MouseEvent) {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false)
-      }
+    const handleClick = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) setShowSuggestions(false)
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
   const handleDestinationChange = async (val: string) => {
@@ -199,579 +274,444 @@ export default function AiPlannerPage() {
     if (val.trim().length > 1) {
       try {
         const res = await getGooglePlaceSuggestions(val)
-        if (res.success && res.predictions.length > 0) {
-          setGoogleSuggestions(res.predictions)
-        } else {
-          setGoogleSuggestions([])
-        }
-      } catch (e) {
-        console.error(e)
-        setGoogleSuggestions([])
-      }
-    } else {
-      setGoogleSuggestions([])
-    }
-  }
-
-  const handleGoogleSuggestionSelect = (desc: string) => {
-    setDestination(desc)
-    setShowSuggestions(false)
+        setGoogleSuggestions(res.success ? res.predictions : [])
+      } catch { setGoogleSuggestions([]) }
+    } else setGoogleSuggestions([])
   }
 
   const handleGenerate = async () => {
     if (!destination) { alert('Please enter a destination.'); return }
     const daysNum = parseInt(numberOfDays) || 5
-    if (daysNum <= 0) { alert('Please enter a valid number of days.'); return }
     if (!selectedVibe) { alert('Please select a travel mood.'); return }
-    if (!companion) { alert('Please select who you are traveling with.'); return }
+    if (!companion)    { alert('Please select who you are traveling with.'); return }
 
-    setStep(2)
-    setLoading(true)
-    setItinerary(null)
-
+    setStep(2); setLoading(true); setItinerary(null)
     const numBudget = parseFloat(budget) || 15000
-    const startTime = Date.now()
-
+    const start = Date.now()
     try {
-      const res = await generateGeminiItinerary({
-        destination, vibe: selectedVibe, companion, days: daysNum, budget: numBudget, currencySymbol
-      })
-
-      const elapsed = Date.now() - startTime
-      const remainingDelay = Math.max(0, 2200 - elapsed)
-
+      const res = await generateGeminiItinerary({ destination, vibe: selectedVibe, companion, days: daysNum, budget: numBudget, currencySymbol })
+      const wait = Math.max(0, 2200 - (Date.now() - start))
       setTimeout(() => {
-        if (res && res.success && res.itinerary) {
-          setItinerary(res.itinerary)
-        } else {
-          alert('Itinerary generation encountered an error. Please try again.')
-          setStep(1)
-        }
+        if (res?.success && res.itinerary) setItinerary(res.itinerary)
+        else { alert('Generation failed. Please try again.'); setStep(1) }
         setLoading(false)
-      }, remainingDelay)
-    } catch (error) {
-      console.error('Error generating itinerary:', error)
-      alert('Network error while generating itinerary. Please try again.')
-      setStep(1)
-      setLoading(false)
-    }
+      }, wait)
+    } catch { alert('Network error. Please try again.'); setStep(1); setLoading(false) }
   }
 
   const handleSaveTrip = () => {
     if (!itinerary) return
-    const userStr = localStorage.getItem('traveloop_user')
-    if (!userStr) return
-
-    const u = JSON.parse(userStr)
-    const localTripsKey = `traveloop_trips_${u.id}`
-    const stored = localStorage.getItem(localTripsKey)
-    const currentTrips = stored ? JSON.parse(stored) : []
-
-    const totalSpentSum = itinerary.dailyItinerary.reduce((sum: number, d: any) => sum + d.totalSpent, 0)
-    const sDate = new Date()
-    const eDate = new Date()
+    const raw = localStorage.getItem('traveloop_user')
+    if (!raw) return
+    const u = JSON.parse(raw)
+    const key = `traveloop_trips_${u.id}`
+    const current = JSON.parse(localStorage.getItem(key) || '[]')
+    const totalSpent = itinerary.dailyItinerary.reduce((s: number, d: any) => s + d.totalSpent, 0)
+    const sDate = new Date(), eDate = new Date()
     eDate.setDate(sDate.getDate() + (parseInt(numberOfDays) || 5))
-
     const newTrip = {
       id: 'ai_trip_' + Math.random().toString(36).substring(2, 11),
       title: `${itinerary.destination} ${itinerary.vibe} Escape`,
-      description: `A customized ${itinerary.days}-day ${itinerary.vibe.toLowerCase()} itinerary for ${itinerary.companion.toLowerCase()} travelers in ${itinerary.destination}.`,
-      startDate: sDate.toISOString(),
-      endDate: eDate.toISOString(),
-      totalBudget: parseFloat(budget) || 15000,
-      coverImage: itinerary.coverImage,
-      stops: [{ id: 's_auto_1', cityName: itinerary.destination, country: itinerary.country }],
+      description: `A ${itinerary.days}-day ${itinerary.vibe.toLowerCase()} itinerary for ${itinerary.companion.toLowerCase()} travelers.`,
+      startDate: sDate.toISOString(), endDate: eDate.toISOString(),
+      totalBudget: parseFloat(budget) || 15000, coverImage: itinerary.coverImage,
+      stops: [{ id: 's1', cityName: itinerary.destination, country: itinerary.country }],
       expenses: [
-        { id: 'exp_t', amount: Math.round(totalSpentSum * 0.20), category: 'Transport' },
-        { id: 'exp_h', amount: Math.round(totalSpentSum * 0.40), category: 'Hotel' },
-        { id: 'exp_f', amount: Math.round(totalSpentSum * 0.20), category: 'Food' },
-        { id: 'exp_a', amount: Math.round(totalSpentSum * 0.15), category: 'Activities' },
-        { id: 'exp_m', amount: Math.round(totalSpentSum * 0.05), category: 'Misc' }
+        { id: 'e1', amount: Math.round(totalSpent * .2), category: 'Transport' },
+        { id: 'e2', amount: Math.round(totalSpent * .4), category: 'Hotel' },
+        { id: 'e3', amount: Math.round(totalSpent * .2), category: 'Food' },
+        { id: 'e4', amount: Math.round(totalSpent * .15), category: 'Activities' },
+        { id: 'e5', amount: Math.round(totalSpent * .05), category: 'Misc' },
       ],
       itineraryDays: itinerary.dailyItinerary,
-      smartRecommendations: itinerary.smartRecommendations
+      smartRecommendations: itinerary.smartRecommendations,
     }
-
-    currentTrips.unshift(newTrip)
-    localStorage.setItem(localTripsKey, JSON.stringify(currentTrips))
-    alert('✅ AI Trip itinerary saved successfully!')
+    current.unshift(newTrip)
+    localStorage.setItem(key, JSON.stringify(current))
+    alert('✅ AI Trip saved successfully!')
     window.location.href = `/dashboard/trips?id=${newTrip.id}`
   }
 
-  const handleQuickBudget = (value: string) => setBudget(value)
+  // ── STEP 1 ──────────────────────────────────────────────────
+  if (step === 1) return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 32, maxWidth: 900, margin: '0 auto', paddingBottom: 48 }}>
 
-  // ─────────────────────────────────────────────────────────────
-  // 🎯 STEP 1: Trip Configuration Form (Light Theme + Larger Text)
-  // ─────────────────────────────────────────────────────────────
-  if (step === 1) {
-    return (
-      <div className="flex flex-col gap-10 max-w-5xl mx-auto pb-12">
-        
-        {/* 🧭 Header: Brand + Progress Steps */}
-        <section className="flex flex-col items-center gap-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-              <Compass className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-heading font-bold text-2xl text-slate-900 tracking-tight">Traveloop AI ✨</span>
+      {/* Brand + Stepper */}
+      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, paddingTop: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 16, background: NEU.BG, boxShadow: NEU.raised, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Compass size={22} color="#6C63FF" />
           </div>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.5rem', color: '#1E293B' }}>Traveloop AI ✨</span>
+        </div>
+        <Stepper current={1} />
+      </section>
 
-          {/* Progress Steps */}
-          <div className="flex items-center justify-center gap-6 md:gap-8 text-base font-medium bg-white border border-slate-200 px-6 py-3.5 rounded-full shadow-sm">
-            <StepBadge step={1} current={step} label="Destination" />
-            <span className="text-slate-300 text-xl">•</span>
-            <StepBadge step={2} current={step} label="Preferences" />
-            <span className="text-slate-300 text-xl">•</span>
-            <StepBadge step={3} current={step} label="Generate" />
-          </div>
-        </section>
+      {/* Card 1: Destination & Budget */}
+      <NeuCard>
+        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={18} color="#6C63FF" /></div>
+          Where would you like to go?
+        </h2>
+        <p style={{ color: '#94A3B8', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', marginBottom: 28 }}>
+          Search for a city, country, or landmark — autocompleted via Google Places.
+        </p>
 
-        {/* 📍 Card 1: Destination & Budget */}
-        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative z-20">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100/50 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="flex flex-col gap-7 relative z-10">
-            <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
-                <MapPin className="h-6 w-6 text-indigo-600" />
-                Where would you like to go?
-              </h2>
-              <p className="text-lg text-slate-800 mt-2">
-                Search for a city, country, or landmark. We'll autocomplete suggestions using Google Places.
-              </p>
-            </div>
-
-            {/* Destination Search */}
-            <div className="flex flex-col gap-3 relative">
-              <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Destination *</label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
-                <Input 
-                  placeholder="Search city or country..."
-                  value={destination}
-                  onChange={(e) => handleDestinationChange(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
-                  className="pl-12 pr-4 bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                />
-              </div>
-
-              {/* Google Places Suggestions Dropdown */}
-              {showSuggestions && googleSuggestions.length > 0 && (
-                <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xl z-50 max-h-72 overflow-y-auto">
-                  <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                    <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide flex items-center gap-1.5">
-                      <Search className="h-3.5 w-3.5" />
-                      Google Places Suggestions
-                    </span>
+        {/* Destination search */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative', marginBottom: 24 }} ref={suggestionsRef}>
+          <label style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginLeft: 4 }}>Destination *</label>
+          <NeuInput
+            placeholder="Search city or country..."
+            value={destination}
+            onChange={e => handleDestinationChange(e.target.value)}
+            icon={Search}
+            onFocus={() => setShowSuggestions(true)}
+          />
+          {/* Suggestions */}
+          {showSuggestions && googleSuggestions.length > 0 && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, zIndex: 50, background: NEU.BG, borderRadius: 20, boxShadow: NEU.hover, border: 'none', overflow: 'hidden', maxHeight: 280, overflowY: 'auto' }} className="custom-scrollbar">
+              {googleSuggestions.map(item => (
+                <button
+                  key={item.placeId}
+                  type="button"
+                  onClick={() => { setDestination(item.description); setShowSuggestions(false) }}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '12px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 12, transition: 'background .15s ease',
+                    fontFamily: 'Inter, sans-serif',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(108,99,255,.06)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  <MapPin size={16} color="#94A3B8" style={{ flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '0.9rem' }}>{item.mainText}</div>
+                    {item.secondaryText && <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{item.secondaryText}</div>}
                   </div>
-                  {googleSuggestions.map((item) => (
-                    <button
-                      key={item.placeId}
-                      type="button"
-                      onClick={() => handleGoogleSuggestionSelect(item.description)}
-                      className="w-full text-left px-5 py-3.5 hover:bg-indigo-50 text-slate-800 border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3"
-                    >
-                      <MapPin className="h-5 w-5 text-slate-500 shrink-0" />
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900 text-base">{item.mainText}</span>
-                        {item.secondaryText && <span className="text-sm text-slate-600">{item.secondaryText}</span>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Days & Budget Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Number of Days */}
-              <div className="flex flex-col gap-3">
-                <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Number of Days *</label>
-                <Input 
-                  type="number"
-                  min="1"
-                  max="30"
-                  placeholder="e.g., 7"
-                  value={numberOfDays}
-                  onChange={(e) => setNumberOfDays(e.target.value)}
-                  className="bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                />
-              </div>
-
-              {/* Budget */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-slate-800 uppercase tracking-wide">Total Budget *</label>
-                  <span className="text-sm font-semibold text-indigo-700">Currency: {currencySymbol}</span>
-                </div>
-                
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-600 font-bold text-lg pointer-events-none">
-                    {currencySymbol}
-                  </span>
-                  <Input 
-                    type="number"
-                    placeholder="Enter your budget..."
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    className="pl-10 bg-white border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 text-lg py-4 h-14 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                  />
-                </div>
-
-                {/* Quick Budget Chips */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-slate-900 font-semibold">Quick select:</span>
-                  {['5000', '15000', '25000', '50000'].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => handleQuickBudget(val)}
-                      className={`px-4 py-2 rounded-lg border text-sm font-semibold transition-all ${
-                        budget === val 
-                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                          : 'bg-white border-slate-350 text-slate-900 hover:border-indigo-400 hover:bg-indigo-50'
-                      }`}
-                    >
-                      {currencySymbol}{(parseInt(val) / 1000)}K
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* 💜 Card 2: Travel Mood */}
-        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50 relative z-10">
-          <div className="absolute top-0 left-0 w-64 h-64 bg-purple-100/50 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="flex flex-col gap-7 relative z-10">
-            <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-indigo-600" />
-                What's your travel vibe?
-              </h2>
-              <p className="text-lg text-slate-800 mt-2">
-                Choose the mood that best matches your dream trip.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              {VIBES.map((vibe) => (
-                <VibeButton
-                  key={vibe.id}
-                  vibe={vibe}
-                  selected={selectedVibe === vibe.id}
-                  onSelect={() => setSelectedVibe(vibe.id)}
-                />
+                </button>
               ))}
             </div>
-          </div>
-        </Card>
-
-        {/* 👥 Card 3: Traveling With */}
-        <Card className="bg-white border-slate-200 rounded-3xl p-7 md:p-9 shadow-lg shadow-slate-200/50">
-          <div className="flex flex-col gap-7">
-            <div>
-              <h2 className="font-heading font-bold text-2xl text-slate-950 flex items-center gap-2">
-                <Users className="h-6 w-6 text-indigo-600" />
-                Who are you traveling with?
-              </h2>
-              <p className="text-lg text-slate-800 mt-2">
-                This helps us tailor recommendations to your group.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {COMPANIONS.map((item) => (
-                <CompanionButton
-                  key={item.id}
-                  item={item}
-                  selected={companion === item.id}
-                  onSelect={() => setCompanion(item.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* 🚀 Generate Button */}
-        <div className="pt-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={!destination || !numberOfDays || !budget || !selectedVibe || !companion}
-            className="w-full py-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-          >
-            <Sparkles className="h-6 w-6 animate-pulse" />
-            Generate My AI Itinerary ✨
-          </Button>
-          <p className="text-center text-sm text-slate-700 mt-3 font-semibold">
-            Takes about 30 seconds • Powered by Google Places + Gemini AI
-          </p>
+          )}
         </div>
 
-      </div>
-    )
-  }
+        {/* Days & Budget */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginLeft: 4 }}>Number of Days *</label>
+            <NeuInput type="number" placeholder="e.g. 7" value={numberOfDays} onChange={e => setNumberOfDays(e.target.value)} min="1" max="30" />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>Total Budget *</label>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif' }}>Currency: {currencySymbol}</span>
+            </div>
+            <NeuInput type="number" placeholder="Enter your budget..." value={budget} onChange={e => setBudget(e.target.value)} prefix={currencySymbol} />
+            {/* Quick chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              {['5000', '15000', '25000', '50000'].map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setBudget(val)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                    fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.78rem',
+                    background: NEU.BG, transition: 'all .25s ease',
+                    boxShadow: budget === val ? NEU.pressed : NEU.raised,
+                    color: budget === val ? '#6C63FF' : '#64748B',
+                    transform: budget === val ? 'scale(.97)' : 'scale(1)',
+                  }}
+                >
+                  {currencySymbol}{parseInt(val) / 1000}K
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </NeuCard>
 
-  // ─────────────────────────────────────────────────────────────
-  // 🎯 STEP 2: Loading or Results View (Light Theme + Larger Text)
-  // ─────────────────────────────────────────────────────────────
-  return (
-    <div className="flex flex-col gap-10 max-w-6xl mx-auto pb-12">
-      
-      {/* 🧭 Header: Back Button + Title */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          onClick={() => { setStep(1); setLoading(false) }}
-          className="text-slate-900 hover:text-slate-950 hover:bg-slate-100 font-semibold"
+      {/* Card 2: Travel Vibe */}
+      <NeuCard>
+        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={18} color="#6C63FF" /></div>
+          What's your travel vibe?
+        </h2>
+        <p style={{ color: '#94A3B8', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', marginBottom: 24 }}>
+          Choose the mood that best matches your dream trip.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 14 }}>
+          {VIBES.map(v => <VibeButton key={v.id} vibe={v} selected={selectedVibe === v.id} onSelect={() => setSelectedVibe(v.id)} />)}
+        </div>
+      </NeuCard>
+
+      {/* Card 3: Companion */}
+      <NeuCard>
+        <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 6px' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={18} color="#6C63FF" /></div>
+          Who are you traveling with?
+        </h2>
+        <p style={{ color: '#94A3B8', fontSize: '0.9rem', fontFamily: 'Inter, sans-serif', marginBottom: 24 }}>
+          This helps us tailor recommendations to your group.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+          {COMPANIONS.map(c => <CompanionButton key={c.id} item={c} selected={companion === c.id} onSelect={() => setCompanion(c.id)} />)}
+        </div>
+      </NeuCard>
+
+      {/* Generate button */}
+      <div>
+        <button
+          onClick={handleGenerate}
+          disabled={!destination || !numberOfDays || !budget || !selectedVibe || !companion}
+          style={{
+            width: '100%', padding: '1.1rem', borderRadius: 20, border: 'none', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)',
+            color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: '1.05rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            boxShadow: '8px 8px 16px rgba(163,177,198,.4), -8px -8px 16px rgba(255,255,255,.8)',
+            transition: 'all .3s ease', opacity: (!destination || !numberOfDays || !budget || !selectedVibe || !companion) ? .5 : 1,
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+          onMouseDown={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.boxShadow = 'inset 4px 4px 8px rgba(0,0,0,.18), inset -4px -4px 8px rgba(255,255,255,.25)'
+          }}
+          onMouseUp={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.boxShadow = '8px 8px 16px rgba(163,177,198,.4), -8px -8px 16px rgba(255,255,255,.8)'
+          }}
         >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Edit Preferences
-        </Button>
-        <div className="flex items-center gap-2 text-sm text-slate-700">
-          <StepBadge step={1} current={2} label="" />
-          <StepBadge step={2} current={2} label="" />
-          <StepBadge step={3} current={2} label="" />
-        </div>
+          <Sparkles size={22} style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+          Generate My AI Itinerary ✨
+          <ArrowRight size={20} />
+        </button>
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#94A3B8', marginTop: 12, fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+          Takes ~30 seconds · Powered by Google Places + Gemini AI
+        </p>
       </div>
 
-      {/* ⏳ Loading State */}
-      {loading && (
-        <Card className="bg-white border-slate-200 rounded-3xl p-12 min-h-[400px] flex flex-col justify-center items-center text-center gap-6 shadow-lg">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center">
-              <Loader2 className="h-10 w-10 text-indigo-600 animate-spin" />
-            </div>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full animate-ping" />
-          </div>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.6} }
+      `}</style>
+    </div>
+  )
 
-          <div className="flex flex-col gap-3 max-w-md">
-            <h3 className="font-heading font-bold text-2xl text-slate-900">
+  // ── STEP 2 ──────────────────────────────────────────────────
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1100, margin: '0 auto', paddingBottom: 48 }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <button
+          onClick={() => { setStep(1); setLoading(false) }}
+          className="neu-btn"
+          style={{ padding: '10px 20px', color: '#334155', fontSize: '0.875rem' }}
+        >
+          <ArrowLeft size={16} /> Edit Preferences
+        </button>
+        <Stepper current={3} />
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <NeuCard style={{ minHeight: 360, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 24 }}>
+          <div style={{ position: 'relative' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 28, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader2 size={36} color="#6C63FF" style={{ animation: 'spin 1s linear infinite' }} />
+            </div>
+            <div style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: '50%', background: '#8B5CF6', animation: 'ping 1s cubic-bezier(0,0,.2,1) infinite' }} />
+          </div>
+          <div>
+            <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.4rem', color: '#1E293B', margin: '0 0 10px' }}>
               Crafting your perfect itinerary... ✨
             </h3>
-            <p className="text-lg text-slate-700 leading-relaxed">
+            <p style={{ color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', maxWidth: 400, lineHeight: 1.7 }}>
               Our AI is analyzing {destination}, finding top-rated attractions, calculating optimal routes, and building a personalized day-by-day plan just for you.
             </p>
           </div>
-          
-          {/* Progress Bar */}
-          <div className="w-64 h-2 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full animate-pulse w-3/4" />
+          {/* Progress bar */}
+          <div style={{ width: 240, height: 10, borderRadius: 999, background: NEU.BG, boxShadow: NEU.pressed, overflow: 'hidden', padding: 2 }}>
+            <div style={{ height: '100%', borderRadius: 999, width: '75%', background: 'linear-gradient(90deg, #6C63FF, #8B5CF6)', animation: 'pulse 1.5s ease-in-out infinite' }} />
           </div>
-        </Card>
+          <style>{`
+            @keyframes spin { to { transform: rotate(360deg); } }
+            @keyframes ping { 75%,100% { transform: scale(2); opacity: 0; } }
+            @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
+          `}</style>
+        </NeuCard>
       )}
 
-      {/* ✅ Generated Itinerary Results */}
+      {/* Results */}
       {!loading && itinerary && (
-        <div className="flex flex-col gap-10">
-          
-          {/* 🎯 Summary Banner */}
-          <Card className="bg-white border-indigo-200 rounded-3xl p-6 md:p-8 shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-100/50 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-              {/* Destination Header */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center">
-                  <MapPin className="h-8 w-8 text-indigo-600" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+          {/* Summary Banner */}
+          <NeuCard>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ width: 64, height: 64, borderRadius: 22, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <MapPin size={28} color="#6C63FF" />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-semibold text-indigo-700 uppercase tracking-wide">📍 Destination</span>
-                  <h2 className="font-heading font-bold text-3xl text-slate-900 leading-tight">
-                    {itinerary.destination}
-                  </h2>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6C63FF', fontFamily: 'Inter, sans-serif', marginBottom: 4 }}>📍 Destination</div>
+                  <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: '#1E293B', margin: 0 }}>{itinerary.destination}</h2>
                 </div>
               </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-                <StatCard label="Vibe" value={itinerary.vibe} sublabel="" icon={Sparkles} color="text-indigo-600" />
-                <StatCard label="Travelers" value={itinerary.companion} sublabel="" icon={Users} color="text-purple-600" />
-                <StatCard label="Duration" value={`${itinerary.days} Days`} sublabel="" icon={Calendar} color="text-emerald-600" />
-                <StatCard label="Budget" value={`${currencySymbol}${itinerary.budget.toLocaleString()}`} sublabel="Total" icon={DollarSign} color="text-amber-600" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
+                <ResultStat label="Vibe"     value={itinerary.vibe}                        icon={Sparkles}   accent="#6C63FF" />
+                <ResultStat label="Travelers" value={itinerary.companion}                   icon={Users}      accent="#8B5CF6" />
+                <ResultStat label="Duration" value={`${itinerary.days} Days`}               icon={Calendar}   accent="#22C55E" />
+                <ResultStat label="Budget"   value={`${currencySymbol}${itinerary.budget?.toLocaleString()}`} icon={DollarSign} accent="#F59E0B" />
               </div>
             </div>
-          </Card>
+          </NeuCard>
 
-          {/* 📊 Budget & Insights Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">💵 Budget Tier</span>
-              <div className="mt-2 text-2xl font-bold text-indigo-700">{itinerary.category}</div>
-              <span className="text-sm text-slate-600 mt-1 block">Cost level per person</span>
-            </Card>
-            
-            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">💸 Daily Average</span>
-              <div className="mt-2 text-2xl font-bold text-emerald-700">
-                {currencySymbol}{Math.round(itinerary.budget / itinerary.days).toLocaleString()}
+          {/* Insights */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+            {[
+              { label: '💵 Budget Tier',  value: itinerary.category,       sub: 'Cost level per person' },
+              { label: '💸 Daily Avg',    value: `${currencySymbol}${Math.round(itinerary.budget / itinerary.days).toLocaleString()}`, sub: 'Per day allocation' },
+              { label: '⚡ Trip Pace',    value: itinerary.tripIntensity,   sub: 'Energy level' },
+              { label: '🎯 Attractions',  value: `${itinerary.attractionsCount}+`, sub: 'Google verified' },
+            ].map(item => (
+              <div key={item.label} style={{ background: NEU.BG, borderRadius: 20, boxShadow: NEU.raised, border: 'none', padding: '1.1rem 1.25rem' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'Inter, sans-serif' }}>{item.label}</div>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.3rem', color: '#6C63FF', margin: '8px 0 4px' }}>{item.value}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{item.sub}</div>
               </div>
-              <span className="text-sm text-slate-600 mt-1 block">Per day allocation</span>
-            </Card>
-
-            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">⚡ Trip Pace</span>
-              <div className="mt-2 text-2xl font-bold text-violet-700">{itinerary.tripIntensity}</div>
-              <span className="text-sm text-slate-600 mt-1 block">Energy level</span>
-            </Card>
-
-            <Card className="bg-white border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-sm font-semibold text-slate-700 uppercase tracking-wide">🎯 Attractions</span>
-              <div className="mt-2 text-2xl font-bold text-slate-900">{itinerary.attractionsCount}+</div>
-              <span className="text-sm text-slate-600 mt-1 block">Google Places verified</span>
-            </Card>
+            ))}
           </div>
 
-          {/* 🗺️ Interactive Map */}
-          <Card className="bg-white border-slate-200 rounded-3xl p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading font-bold text-xl text-slate-900 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-indigo-600" />
-                Route Map
+          {/* Map */}
+          <NeuCard>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                <MapPin size={18} color="#6C63FF" /> Route Map
               </h3>
-              <span className="text-sm font-semibold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full">
+              <div style={{ padding: '5px 14px', borderRadius: 999, background: NEU.BG, boxShadow: NEU.pressed, fontSize: 11, fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif' }}>
                 Live Coordinates
-              </span>
+              </div>
             </div>
-            <div className="rounded-2xl overflow-hidden border border-slate-200">
-              <GoogleMapWidget 
-                activities={itinerary.dailyItinerary.flatMap((d: any) => d.activities)} 
-                apiKey={googleMapsKey} 
-              />
+            <div style={{ borderRadius: 20, overflow: 'hidden', boxShadow: NEU.pressed }}>
+              <GoogleMapWidget activities={itinerary.dailyItinerary.flatMap((d: any) => d.activities)} apiKey={googleMapsKey} />
             </div>
-          </Card>
+          </NeuCard>
 
-          {/* 📅 Day-by-Day Itinerary */}
-          <div className="flex flex-col gap-6">
-            <h3 className="font-heading font-bold text-2xl text-slate-900 flex items-center gap-2">
-              <Briefcase className="h-6 w-6 text-indigo-600" />
-              Your Day-by-Day Plan
+          {/* Day-by-day */}
+          <div>
+            <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <Briefcase size={20} color="#6C63FF" /> Your Day-by-Day Plan
             </h3>
-
-            {itinerary.dailyItinerary.map((day: any) => (
-              <Card key={day.day} className="bg-white border-slate-200 rounded-2xl p-6 shadow-sm">
-                {/* Day Header */}
-                <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-xl bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center text-base font-bold text-indigo-700">
-                      {day.day}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {itinerary.dailyItinerary.map((day: any) => (
+                <NeuCard key={day.day}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(163,177,198,.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 14, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#6C63FF' }}>
+                        {day.day}
+                      </div>
+                      <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1rem', color: '#1E293B' }}>Day {day.day} Schedule</span>
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontFamily: 'Inter, sans-serif', color: '#94A3B8' }}>
+                      Daily: <strong style={{ color: '#6C63FF' }}>{currencySymbol}{day.totalSpent}</strong>
                     </span>
-                    <span className="text-lg font-semibold text-slate-900">Day {day.day} Schedule</span>
                   </div>
-                  <span className="text-sm font-medium text-slate-700">
-                    Daily Spend: <span className="font-bold text-indigo-700">{currencySymbol}{day.totalSpent}</span>
-                  </span>
-                </div>
-
-                {/* Activities Timeline */}
-                <div className="flex flex-col gap-4 relative pl-2">
-                  {day.activities.map((act: any, idx: number) => {
-                    if (act.isMeal) {
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {day.activities.map((act: any, i: number) => {
+                      if (act.isMeal) return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderRadius: 14, background: NEU.BG, boxShadow: NEU.pressed }}>
+                          <Utensils size={16} color="#F59E0B" style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, fontFamily: 'Inter, sans-serif', fontSize: '0.9rem', color: '#334155' }}>{act.name}</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#F59E0B', fontFamily: 'Inter, sans-serif' }}>{currencySymbol}{act.expense}</span>
+                        </div>
+                      )
                       return (
-                        <div key={idx} className="flex items-center gap-4 bg-amber-50 px-5 py-3.5 rounded-xl border border-amber-100">
-                          <Utensils className="h-5 w-5 text-amber-600 shrink-0" />
-                          <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
-                            <span className="text-base font-medium text-slate-800">{act.name}</span>
-                            <span className="text-sm font-semibold text-amber-700">
-                              Est: {currencySymbol}{act.expense}
+                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 16px', borderRadius: 16, background: NEU.BG, boxShadow: NEU.raised, transition: 'all .25s ease' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.hover }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.raised }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                              <Clock size={13} color="#94A3B8" />
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>{act.time}</span>
+                              <div style={{ padding: '2px 10px', borderRadius: 999, background: NEU.BG, boxShadow: NEU.pressed, fontSize: 11, color: '#64748B', fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>{act.city}</div>
+                            </div>
+                            <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 4px', fontSize: '0.95rem' }}>{act.name}</h4>
+                            {act.description && <p style={{ fontSize: '0.82rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{act.description}</p>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                            {act.rating && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Star size={13} color="#F59E0B" style={{ fill: '#F59E0B' }} />
+                                <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{act.rating}</span>
+                              </div>
+                            )}
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif' }}>
+                              {act.expense > 0 ? `${currencySymbol}${act.expense}` : 'Free'}
                             </span>
                           </div>
                         </div>
                       )
-                    }
-
-                    return (
-                      <div key={idx} className="group relative flex items-start gap-4">
-                        {/* Timeline dot */}
-                        <div className="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white absolute left-[-22px] top-2 shadow-sm" />
-                        
-                        <div className="flex-1 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-slate-50 hover:bg-indigo-50/50 p-4 rounded-xl border border-transparent hover:border-indigo-100 transition-all">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-slate-500" />
-                              <span className="text-sm font-semibold text-slate-700 font-mono">{act.time}</span>
-                              <span className="text-sm text-slate-700 bg-white px-2.5 py-0.5 rounded border border-slate-200">
-                                {act.city}
-                              </span>
-                            </div>
-                            <h4 className="text-base font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
-                              {act.name}
-                            </h4>
-                            {act.description && (
-                              <p className="text-sm text-slate-700 leading-relaxed">{act.description}</p>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-4 text-sm">
-                            {act.rating && (
-                              <div className="flex items-center gap-1 text-amber-500">
-                                <Star className="h-4 w-4 fill-current" />
-                                <span className="font-bold text-slate-800">{act.rating}</span>
-                              </div>
-                            )}
-                            <span className="text-slate-700">
-                              Cost: <span className="font-semibold text-slate-900">
-                                {act.expense > 0 ? `${currencySymbol}${act.expense}` : 'Free'}
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* 💡 Smart Recommendations */}
-          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 rounded-3xl p-6 shadow-sm">
-            <h4 className="font-heading font-bold text-xl text-slate-900 flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
-              AI-Powered Recommendations
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {itinerary.smartRecommendations.map((rec: any, idx: number) => (
-                <Card key={idx} className="bg-white border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Hidden Gem</span>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span className="font-bold text-slate-800 text-sm">{rec.rating}</span>
-                    </div>
+                    })}
                   </div>
-                  <h5 className="text-base font-bold text-slate-900 mb-2">{rec.name}</h5>
-                  <p className="text-sm text-slate-700 leading-relaxed">{rec.desc}</p>
-                </Card>
+                </NeuCard>
               ))}
             </div>
-          </Card>
-
-          {/* 🎯 Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
-            <Button
-              onClick={() => { setStep(1); setLoading(false) }}
-              variant="outline"
-              className="flex-1 py-4 bg-white border-slate-300 hover:bg-slate-50 rounded-xl text-base font-semibold text-slate-700"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Regenerate Plan
-            </Button>
-            <Button
-              onClick={handleSaveTrip}
-              className="flex-[2] py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-emerald-200/50 hover:shadow-xl flex items-center justify-center gap-3"
-            >
-              <Check className="h-5 w-5" />
-              Save This Trip to My Dashboard ✨
-            </Button>
           </div>
 
+          {/* Smart recommendations */}
+          <NeuCard>
+            <h4 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 18px' }}>
+              <Sparkles size={18} color="#6C63FF" /> AI-Powered Recommendations
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
+              {itinerary.smartRecommendations.map((rec: any, i: number) => (
+                <div key={i} style={{ background: NEU.BG, borderRadius: 20, boxShadow: NEU.raised, border: 'none', padding: '1.1rem 1.25rem', transition: 'all .3s ease' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.hover }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = NEU.raised }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: '#6C63FF', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' }}>Hidden Gem</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Star size={13} color="#F59E0B" style={{ fill: '#F59E0B' }} />
+                      <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{rec.rating}</span>
+                    </div>
+                  </div>
+                  <h5 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: '#1E293B', margin: '0 0 6px', fontSize: '0.95rem' }}>{rec.name}</h5>
+                  <p style={{ fontSize: '0.82rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.6, margin: 0 }}>{rec.desc}</p>
+                </div>
+              ))}
+            </div>
+          </NeuCard>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { setStep(1); setLoading(false) }}
+              className="neu-btn"
+              style={{ flex: 1, minWidth: 160, padding: '14px 24px', color: '#334155' }}
+            >
+              <ArrowLeft size={18} /> Regenerate Plan
+            </button>
+            <button
+              onClick={handleSaveTrip}
+              style={{
+                flex: 2, minWidth: 220, padding: '14px 24px', borderRadius: 16, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #22C55E, #06B6D4)',
+                color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: '1rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                boxShadow: '8px 8px 16px rgba(163,177,198,.4), -8px -8px 16px rgba(255,255,255,.8)',
+                transition: 'all .3s ease',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+            >
+              <Check size={20} /> Save Trip to Dashboard ✨
+            </button>
+          </div>
         </div>
       )}
-
     </div>
   )
 }
