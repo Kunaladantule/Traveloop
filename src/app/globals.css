@@ -7,20 +7,19 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─────────────────────────────────────────────────────────────
-   🎨 True Neumorphism Design Tokens
+   True Neumorphism Design Tokens — 3-Level Elevation
    ───────────────────────────────────────────────────────────── */
 @theme inline {
-  /* Base — the ONE background color everything lives on */
-  --color-background: #EAEFF5;
+  /* 3-Level Background Hierarchy */
+  --color-background: #E8EDF4;          /* Page level */
   --color-foreground: #1E293B;
 
-  /* Surfaces share the same background for seamless integration */
-  --color-card: #EAEFF5;
+  --color-card: #F8FAFC;                /* Cards */
   --color-card-foreground: #1E293B;
-  --color-popover: #EAEFF5;
+  --color-popover: #F8FAFC;
   --color-popover-foreground: #1E293B;
 
-  /* Primary — #6C63FF → #8B5CF6 */
+  /* Primary */
   --color-primary: #6C63FF;
   --color-primary-foreground: #FFFFFF;
   --color-primary-hover: #5A52E8;
@@ -34,16 +33,16 @@
   --color-accent-foreground: #FFFFFF;
 
   /* Muted */
-  --color-muted: #EDF2F7;
+  --color-muted: #EEF2F7;
   --color-muted-foreground: #64748B;
 
   /* Destructive */
   --color-destructive: #EF4444;
   --color-destructive-foreground: #FFFFFF;
 
-  /* No borders — shadows do all the work */
+  /* No borders */
   --color-border: transparent;
-  --color-input: #EAEFF5;
+  --color-input: #E8EDF4;
   --color-input-border: transparent;
   --color-input-focus: #6C63FF;
   --color-ring: #6C63FF;
@@ -56,11 +55,11 @@
   --color-chart-5: #A78BFA;
 
   /* Sidebar */
-  --color-sidebar: #EAEFF5;
+  --color-sidebar: #EEF2F7;
   --color-sidebar-foreground: #1E293B;
   --color-sidebar-primary: #6C63FF;
   --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: #EDF2F7;
+  --color-sidebar-accent: #E8EDF4;
   --color-sidebar-accent-foreground: #1E293B;
   --color-sidebar-border: transparent;
   --color-sidebar-ring: #6C63FF;
@@ -70,7 +69,7 @@
   --font-heading: 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: ui-monospace, monospace;
 
-  /* Border radius — generous for Soft UI */
+  /* Border radius */
   --radius-xs:  8px;
   --radius-sm:  12px;
   --radius-md:  16px;
@@ -78,35 +77,29 @@
   --radius-xl:  24px;
   --radius-2xl: 32px;
 
-  /* ── Neumorphic Shadow System ───────────────────────────── */
-  /* Raised  — element protrudes outward */
+  /* ── Shadow System (reduced opacity ~50%) ────────────────── */
   --shadow-neu-raised:
-    8px 8px 16px rgba(163,177,198,.45),
-    -8px -8px 16px rgba(255,255,255,.85);
+    8px 8px 18px rgba(163,177,198,.18),
+    -8px -8px 18px rgba(255,255,255,.9);
 
-  /* Hover raised — deeper lift on hover */
   --shadow-neu-hover:
-    12px 12px 24px rgba(163,177,198,.35),
-    -12px -12px 24px rgba(255,255,255,.9);
+    10px 10px 22px rgba(163,177,198,.15),
+    -10px -10px 22px rgba(255,255,255,.95);
 
-  /* Pressed / inset — element carved into surface */
   --shadow-neu-pressed:
-    inset 4px 4px 8px rgba(163,177,198,.45),
-    inset -4px -4px 8px rgba(255,255,255,.85);
+    inset 4px 4px 8px rgba(163,177,198,.2),
+    inset -4px -4px 8px rgba(255,255,255,.9);
 
-  /* Input inset — even subtler for fields */
   --shadow-neu-input:
-    inset 3px 3px 8px rgba(163,177,198,.35),
-    inset -3px -3px 8px rgba(255,255,255,.85);
+    inset 3px 3px 6px rgba(163,177,198,.15),
+    inset -3px -3px 6px rgba(255,255,255,.9);
 
-  /* Soft sidebar hover */
   --shadow-neu-soft:
-    4px 4px 8px rgba(163,177,198,.3),
-    -4px -4px 8px rgba(255,255,255,.8);
+    4px 4px 8px rgba(163,177,198,.12),
+    -4px -4px 8px rgba(255,255,255,.9);
 
-  /* Primary button pressed */
   --shadow-neu-btn-pressed:
-    inset 4px 4px 8px rgba(0,0,0,.18),
+    inset 4px 4px 8px rgba(0,0,0,.12),
     inset -4px -4px 8px rgba(255,255,255,.25);
 
   /* Gradients */
@@ -115,7 +108,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   🧱 Base Styles & Resets
+   Base Styles
    ───────────────────────────────────────────────────────────── */
 @layer base {
   *, *::before, *::after {
@@ -141,7 +134,6 @@
     font-family: var(--font-sans);
   }
 
-  /* Typography — Space Grotesk for headings */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     font-weight: 700;
@@ -169,7 +161,6 @@
     transition: color .2s ease;
   }
 
-  /* Inputs — all carved/inset by default */
   input, textarea, select {
     font-family: var(--font-sans);
     font-size: .95rem;
@@ -183,54 +174,49 @@
     transition: box-shadow .25s ease;
     width: 100%;
   }
-  input::placeholder, textarea::placeholder {
-    color: #94A3B8;
-  }
+  input::placeholder, textarea::placeholder { color: #94A3B8; }
   input:focus, textarea:focus, select:focus {
     box-shadow:
-      inset 3px 3px 8px rgba(163,177,198,.35),
-      inset -3px -3px 8px rgba(255,255,255,.85),
-      0 0 0 2px rgba(108,99,255,.25);
+      inset 3px 3px 6px rgba(163,177,198,.15),
+      inset -3px -3px 6px rgba(255,255,255,.9),
+      0 0 0 2px rgba(108,99,255,.2);
   }
   input:disabled, textarea:disabled, select:disabled {
-    opacity: .55;
-    cursor: not-allowed;
+    opacity: .55; cursor: not-allowed;
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   🎨 Component Styles (Neumorphism)
+   Component Styles
    ───────────────────────────────────────────────────────────── */
 @layer components {
 
-  /* ── Core Neu primitives ── */
   .neu-raised {
-    background: #EAEFF5;
+    background: #F8FAFC;
     box-shadow: var(--shadow-neu-raised);
     border: none;
     transition: box-shadow .3s ease, transform .3s ease;
   }
-  .neu-raised:hover {
-    box-shadow: var(--shadow-neu-hover);
-  }
+  .neu-raised:hover { box-shadow: var(--shadow-neu-hover); }
+
   .neu-pressed {
-    background: #EAEFF5;
+    background: #E8EDF4;
     box-shadow: var(--shadow-neu-pressed);
     border: none;
   }
+
   .neu-card {
-    background: #EAEFF5;
+    background: #F8FAFC;
     box-shadow: var(--shadow-neu-raised);
     border: none;
-    border-radius: 24px;
+    border-radius: 32px;
     padding: 2rem;
     transition: box-shadow .3s ease, transform .3s ease;
   }
-  .neu-card:hover {
-    box-shadow: var(--shadow-neu-hover);
-  }
+  .neu-card:hover { box-shadow: var(--shadow-neu-hover); }
+
   .neu-input-wrap {
-    background: #EAEFF5;
+    background: #E8EDF4;
     box-shadow: var(--shadow-neu-input);
     border: none;
     border-radius: 14px;
@@ -238,16 +224,15 @@
     transition: box-shadow .25s ease;
   }
 
-  /* ── Glass accent (navbar / modals) ── */
   .neu-glass {
-    background: rgba(255,255,255,.55);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--shadow-neu-raised);
+    background: rgba(248,250,252,.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-neu-soft);
     border: none;
   }
 
-  /* ── Buttons ── */
+  /* Buttons */
   .neu-btn {
     display: inline-flex;
     align-items: center;
@@ -258,7 +243,7 @@
     font-size: .875rem;
     border-radius: 16px;
     padding: .75rem 1.5rem;
-    background: #EAEFF5;
+    background: #F8FAFC;
     color: #1E293B;
     border: none;
     box-shadow: var(--shadow-neu-raised);
@@ -274,10 +259,7 @@
     transform: scale(.97);
     box-shadow: var(--shadow-neu-pressed);
   }
-  .neu-btn:disabled {
-    opacity: .5;
-    pointer-events: none;
-  }
+  .neu-btn:disabled { opacity: .5; pointer-events: none; }
 
   .neu-btn-primary {
     display: inline-flex;
@@ -293,8 +275,8 @@
     color: #FFFFFF;
     border: none;
     box-shadow:
-      6px 6px 12px rgba(163,177,198,.4),
-      -6px -6px 12px rgba(255,255,255,.8);
+      6px 6px 14px rgba(163,177,198,.18),
+      -6px -6px 14px rgba(255,255,255,.9);
     cursor: pointer;
     transition: box-shadow .25s ease, transform .25s ease;
     user-select: none;
@@ -302,21 +284,18 @@
   .neu-btn-primary:hover {
     transform: translateY(-2px);
     box-shadow:
-      10px 10px 20px rgba(163,177,198,.35),
-      -10px -10px 20px rgba(255,255,255,.9);
+      8px 8px 20px rgba(163,177,198,.15),
+      -8px -8px 20px rgba(255,255,255,.95);
   }
   .neu-btn-primary:active {
     transform: scale(.97);
     box-shadow: var(--shadow-neu-btn-pressed);
   }
-  .neu-btn-primary:disabled {
-    opacity: .5;
-    pointer-events: none;
-  }
+  .neu-btn-primary:disabled { opacity: .5; pointer-events: none; }
 
-  /* ── Stat tile ── */
+  /* Stat tile */
   .neu-stat {
-    background: #EAEFF5;
+    background: #F8FAFC;
     box-shadow: var(--shadow-neu-raised);
     border: none;
     border-radius: 24px;
@@ -332,9 +311,9 @@
     box-shadow: var(--shadow-neu-hover);
   }
 
-  /* ── Vibe / tag chip ── */
+  /* Chip */
   .neu-chip {
-    background: #EAEFF5;
+    background: #F8FAFC;
     box-shadow: var(--shadow-neu-raised);
     border: none;
     border-radius: 12px;
@@ -344,10 +323,7 @@
     transition: box-shadow .25s ease, transform .25s ease;
     cursor: pointer;
   }
-  .neu-chip:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-neu-hover);
-  }
+  .neu-chip:hover { transform: translateY(-1px); box-shadow: var(--shadow-neu-hover); }
   .neu-chip-active {
     background: #6C63FF;
     color: #fff;
@@ -359,9 +335,9 @@
     font-weight: 700;
   }
 
-  /* ── Toast ── */
+  /* Toast */
   [data-sonner-toast] {
-    background: #EAEFF5 !important;
+    background: #F8FAFC !important;
     box-shadow: var(--shadow-neu-raised) !important;
     border: none !important;
     border-radius: 20px !important;
@@ -371,14 +347,11 @@
     font-weight: 700;
     color: #1E293B;
   }
-  [data-sonner-toast] [data-description] {
-    color: #64748B;
-    font-weight: 500;
-  }
+  [data-sonner-toast] [data-description] { color: #64748B; font-weight: 500; }
 
-  /* ── Dropdown ── */
+  /* Dropdown */
   .neu-dropdown {
-    background: #EAEFF5;
+    background: #F8FAFC;
     box-shadow: var(--shadow-neu-hover);
     border: none;
     border-radius: 20px;
@@ -392,60 +365,41 @@
     cursor: pointer;
     transition: background .15s ease;
   }
-  .neu-dropdown-item:hover {
-    background: rgba(108,99,255,.07);
-  }
-  .neu-dropdown-item-active {
-    color: #6C63FF;
-    background: rgba(108,99,255,.07);
-    font-weight: 700;
-  }
+  .neu-dropdown-item:hover { background: rgba(108,99,255,.05); }
+  .neu-dropdown-item-active { color: #6C63FF; background: rgba(108,99,255,.05); font-weight: 700; }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   ✨ Utility Overrides & Keyframe Animations
+   Utilities
    ───────────────────────────────────────────────────────────── */
 @layer utilities {
   .font-heading { font-family: var(--font-heading) !important; }
   .font-sans    { font-family: var(--font-sans) !important; }
 
-  /* Floating hero animation */
-  .animate-float {
-    animation: float 5s ease-in-out infinite;
-  }
+  .animate-float { animation: float 5s ease-in-out infinite; }
 
-  /* Remove all borders from Shadcn primitives */
-  .border, .border-border, [class*="border-"] {
-    border-color: transparent;
-  }
+  .border, .border-border, [class*="border-"] { border-color: transparent; }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   🌀 Keyframes
-   ───────────────────────────────────────────────────────────── */
+/* Keyframes */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-10px); }
+  50%       { transform: translateY(-6px); }
 }
-
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 .animate-fade-in { animation: fade-in .35s ease-out both; }
 .animate-slide-up { animation: slide-up .4s cubic-bezier(.16,1,.3,1) both; }
 
-/* ─────────────────────────────────────────────────────────────
-   🧹 Custom Scrollbar
-   ───────────────────────────────────────────────────────────── */
-.custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(163,177,198,.5) transparent; }
+/* Scrollbar */
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(163,177,198,.35) transparent; }
 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(163,177,198,.45); border-radius: 99px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(108,99,255,.4); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(163,177,198,.35); border-radius: 99px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(108,99,255,.3); }

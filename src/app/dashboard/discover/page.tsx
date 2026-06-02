@@ -4,19 +4,22 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
   Search, Globe, MapPin, Star, Compass,
-  Utensils, Sparkles, ArrowRight, DollarSign
+  Utensils, Sparkles, ArrowRight, DollarSign,
+  Navigation
 } from 'lucide-react'
 import { getGooglePlaceSuggestions, getGooglePlacesForCity, PlacePrediction, GooglePlaceInfo } from '@/app/actions/googlePlaces'
 
 // ─────────────────────────────────────────────────────────────
-// Shared Neumorphic tokens
+// 3-Level Elevation Tokens
 // ─────────────────────────────────────────────────────────────
 const NEU = {
-  BG: '#EAEFF5',
-  raised: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
-  hover:  '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
-  pressed:'inset 4px 4px 8px rgba(163,177,198,.45), inset -4px -4px 8px rgba(255,255,255,.85)',
-  input:  'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+  PAGE:    '#E8EDF4',
+  SECTION: '#EEF2F7',
+  CARD:    '#F8FAFC',
+  raised:  '8px 8px 18px rgba(163,177,198,.18), -8px -8px 18px rgba(255,255,255,.9)',
+  hover:   '10px 10px 22px rgba(163,177,198,.15), -10px -10px 22px rgba(255,255,255,.95)',
+  pressed: 'inset 4px 4px 8px rgba(163,177,198,.2), inset -4px -4px 8px rgba(255,255,255,.9)',
+  input:   'inset 3px 3px 6px rgba(163,177,198,.15), inset -3px -3px 6px rgba(255,255,255,.9)',
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -38,14 +41,14 @@ const DestinationCard = ({ dest, onClick }: { dest: typeof POPULAR_DESTINATIONS[
   <div
     onClick={onClick}
     style={{
-      background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none',
+      background: NEU.CARD, borderRadius: 28, boxShadow: NEU.raised, border: 'none',
       overflow: 'hidden', cursor: 'pointer', transition: 'all .3s ease',
     }}
     onMouseEnter={e => { const el = e.currentTarget; el.style.transform = 'translateY(-6px)'; el.style.boxShadow = NEU.hover }}
     onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = NEU.raised }}
   >
     <div style={{ position: 'relative', height: 200, padding: 10 }}>
-      <div style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
+      <div style={{ width: '100%', height: '100%', borderRadius: 20, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
         <img src={dest.image} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.5) 0%, transparent 60%)' }} />
         <div style={{ position: 'absolute', bottom: 14, left: 14 }}>
@@ -54,8 +57,8 @@ const DestinationCard = ({ dest, onClick }: { dest: typeof POPULAR_DESTINATIONS[
       </div>
       <div style={{
         position: 'absolute', top: 20, left: 20, padding: '5px 14px', borderRadius: 999,
-        background: 'rgba(255,255,255,.7)', backdropFilter: 'blur(8px)',
-        boxShadow: '4px 4px 10px rgba(163,177,198,.3), -4px -4px 10px rgba(255,255,255,.7)',
+        background: 'rgba(248,250,252,.8)', backdropFilter: 'blur(8px)',
+        boxShadow: '4px 4px 10px rgba(163,177,198,.2), -4px -4px 10px rgba(255,255,255,.7)',
         fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6C63FF',
         fontFamily: 'Inter, sans-serif',
       }}>{dest.highlight}</div>
@@ -82,7 +85,7 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
   return (
     <div
       style={{
-        background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, border: 'none',
+        background: NEU.CARD, borderRadius: 28, boxShadow: NEU.raised, border: 'none',
         overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%',
         transition: 'all .3s ease',
       }}
@@ -90,15 +93,15 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
       onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'translateY(0)'; el.style.boxShadow = NEU.raised }}
     >
       <div style={{ position: 'relative', height: 180, padding: 10 }}>
-        <div style={{ width: '100%', height: '100%', borderRadius: 18, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
+        <div style={{ width: '100%', height: '100%', borderRadius: 20, overflow: 'hidden', boxShadow: NEU.pressed, position: 'relative' }}>
           <img src={imageUrl} alt={place.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" onError={e => { e.currentTarget.src = defaultImage }} />
         </div>
         {place.rating && (
           <div style={{
             position: 'absolute', top: 20, right: 20, display: 'flex', alignItems: 'center', gap: 4,
             padding: '5px 12px', borderRadius: 12,
-            background: 'rgba(255,255,255,.72)', backdropFilter: 'blur(10px)',
-            boxShadow: '4px 4px 10px rgba(163,177,198,.3), -4px -4px 10px rgba(255,255,255,.7)',
+            background: 'rgba(248,250,252,.8)', backdropFilter: 'blur(8px)',
+            boxShadow: '4px 4px 10px rgba(163,177,198,.2), -4px -4px 10px rgba(255,255,255,.7)',
           }}>
             <Star size={12} color="#F59E0B" style={{ fill: '#F59E0B' }} />
             <span style={{ fontWeight: 800, fontSize: '0.8rem', color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>{place.rating.toFixed(1)}</span>
@@ -109,7 +112,7 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
         <div style={{
           display: 'inline-flex', alignSelf: 'flex-start',
           padding: '4px 12px', borderRadius: 999,
-          background: NEU.BG, boxShadow: NEU.pressed,
+          background: NEU.PAGE, boxShadow: NEU.pressed,
           fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#6C63FF',
           fontFamily: 'Inter, sans-serif',
         }}>{category}</div>
@@ -118,10 +121,10 @@ const PlaceCard = ({ place }: { place: GooglePlaceInfo }) => {
           <MapPin size={14} color="#6C63FF" style={{ flexShrink: 0, marginTop: 2 }} />
           <span style={{ fontSize: '0.8rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{place.address}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(163,177,198,.2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 'auto', paddingTop: 10, borderTop: '1px solid rgba(163,177,198,.15)' }}>
           {place.priceLevel && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
-              <DollarSign size={13} color="#94A3B8" /> {'💰'.repeat(place.priceLevel)}
+              <DollarSign size={13} color="#94A3B8" /> {Array(place.priceLevel).fill('$').join('')}
             </div>
           )}
           {place.openNow !== undefined && (
@@ -176,18 +179,18 @@ export default function DiscoverDestinationPage() {
 
       {/* Hero */}
       <section style={{ textAlign: 'center', paddingTop: 8 }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', background: NEU.BG, borderRadius: 32, boxShadow: NEU.raised, padding: '2.5rem 3rem', border: 'none' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', background: NEU.CARD, borderRadius: 32, boxShadow: NEU.raised, padding: '2.5rem 3rem', border: 'none' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '6px 18px', borderRadius: 999,
-            background: NEU.BG, boxShadow: NEU.raised,
+            background: NEU.PAGE, boxShadow: NEU.pressed,
             fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#6C63FF',
             marginBottom: 20, fontFamily: 'Inter, sans-serif',
           }}>
             <Globe size={14} /> Explore the World
           </div>
-          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', color: '#1E293B', margin: '0 0 12px' }}>
-            Discover Your Next Adventure ✈️
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', color: '#1E293B', margin: '0 0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            Discover Your Next Adventure <Navigation size={32} color="#06B6D4" />
           </h1>
           <p style={{ fontSize: '1rem', color: '#64748B', fontFamily: 'Inter, sans-serif', lineHeight: 1.7, maxWidth: 580, margin: '0 auto' }}>
             Search any city or country to find top attractions, hidden gems, and the best local dining — all powered by Google Places.
@@ -206,15 +209,17 @@ export default function DiscoverDestinationPage() {
             onFocus={() => setShowSuggestions(true)}
             style={{
               width: '100%', paddingLeft: 50, paddingRight: 18, paddingTop: 16, paddingBottom: 16,
-              background: NEU.BG, borderRadius: 20, border: 'none', outline: 'none',
+              background: NEU.PAGE, borderRadius: 20, border: 'none', outline: 'none',
               fontSize: '1rem', color: '#1E293B', fontFamily: 'Inter, sans-serif',
-              boxShadow: NEU.input,
+              boxShadow: NEU.input, transition: 'box-shadow .25s ease'
             }}
+            onFocusCapture={e => { e.currentTarget.style.boxShadow = `${NEU.input}, 0 0 0 2px rgba(108,99,255,.2)` }}
+            onBlur={e => { e.currentTarget.style.boxShadow = NEU.input }}
           />
         </div>
 
         {showSuggestions && suggestions.length > 0 && (
-          <div ref={suggestionsRef} style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, right: 0, zIndex: 50, background: NEU.BG, borderRadius: 20, boxShadow: NEU.hover, border: 'none', overflow: 'hidden', maxHeight: 280, overflowY: 'auto' }} className="custom-scrollbar">
+          <div ref={suggestionsRef} style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, right: 0, zIndex: 50, background: NEU.CARD, borderRadius: 20, boxShadow: NEU.hover, border: 'none', overflow: 'hidden', maxHeight: 280, overflowY: 'auto' }} className="custom-scrollbar">
             {suggestions.map(item => (
               <button
                 key={item.placeId}
@@ -224,7 +229,7 @@ export default function DiscoverDestinationPage() {
                   width: '100%', textAlign: 'left', padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 12, transition: 'background .15s ease', fontFamily: 'Inter, sans-serif',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(108,99,255,.06)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(108,99,255,.05)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
                 <MapPin size={16} color="#94A3B8" style={{ flexShrink: 0 }} />
@@ -241,7 +246,7 @@ export default function DiscoverDestinationPage() {
       {/* Loading */}
       {loading && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '30vh', gap: 16 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 20, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 20, background: NEU.PAGE, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Compass size={24} color="#6C63FF" style={{ animation: 'spin 1.5s linear infinite' }} />
           </div>
           <p style={{ fontSize: '0.95rem', fontWeight: 700, color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Finding amazing places for you...</p>
@@ -253,7 +258,7 @@ export default function DiscoverDestinationPage() {
       {!loading && !hasSearched && (
         <section>
           <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.3rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-            <Sparkles size={20} color="#6C63FF" /> 🔥 Trending Destinations Worldwide
+            <Sparkles size={20} color="#6C63FF" /> Trending Destinations Worldwide
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 24 }}>
             {POPULAR_DESTINATIONS.map((d, i) => <DestinationCard key={i} dest={d} onClick={() => handleSelectSuggestion(d.name)} />)}
@@ -266,9 +271,9 @@ export default function DiscoverDestinationPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
 
           {/* Banner */}
-          <div style={{ background: NEU.BG, borderRadius: 28, boxShadow: NEU.raised, padding: '1.75rem 2.25rem', border: 'none', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ background: NEU.CARD, borderRadius: 32, boxShadow: NEU.raised, padding: '1.75rem 2.25rem', border: 'none', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 56, height: 56, borderRadius: 20, background: NEU.BG, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 20, background: NEU.PAGE, boxShadow: NEU.pressed, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <MapPin size={24} color="#6C63FF" />
               </div>
               <div>
@@ -295,7 +300,7 @@ export default function DiscoverDestinationPage() {
                 {attractions.map((p, i) => <PlaceCard key={`${p.name}-${i}`} place={p} />)}
               </div>
             ) : (
-              <div style={{ background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, padding: '2.5rem 2rem', textAlign: 'center', border: 'none' }}>
+              <div style={{ background: NEU.CARD, borderRadius: 32, boxShadow: NEU.raised, padding: '2.5rem 2rem', textAlign: 'center', border: 'none' }}>
                 <Compass size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
                 <p style={{ color: '#64748B', fontFamily: 'Inter, sans-serif', fontSize: '0.95rem' }}>No attractions found. Try a major city!</p>
               </div>
@@ -312,7 +317,7 @@ export default function DiscoverDestinationPage() {
                 {restaurants.map((p, i) => <PlaceCard key={`${p.name}-${i}`} place={p} />)}
               </div>
             ) : (
-              <div style={{ background: NEU.BG, borderRadius: 24, boxShadow: NEU.raised, padding: '2.5rem 2rem', textAlign: 'center', border: 'none' }}>
+              <div style={{ background: NEU.CARD, borderRadius: 32, boxShadow: NEU.raised, padding: '2.5rem 2rem', textAlign: 'center', border: 'none' }}>
                 <Utensils size={40} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
                 <p style={{ color: '#64748B', fontFamily: 'Inter, sans-serif', fontSize: '0.95rem' }}>No dining spots found. Try a popular tourist destination!</p>
               </div>

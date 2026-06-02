@@ -29,9 +29,11 @@ CRITICAL REQUIREMENTS:
 1. Do NOT invent new attractions, sightseeing spots, cafes, or restaurants.
 2. You MUST select, organize, and sequence places ONLY from the following list of real places fetched from the Google Places API:
 ${placesContext}
-3. If the list contains fewer items than needed, repeat them intelligently or schedule longer visits/relaxation blocks rather than creating new names.
-4. Each day must include a chronological list of 3 activities (attractions/sightseeing) and 2 meals (Lunch and Dinner).
-5. For every activity and meal, include the correct "lat" and "lng" coordinates exactly as provided in the list.
+3. NO REPEATING LOCATIONS: Maintain a global set of used places. Never repeat an attraction or a restaurant across the entire itinerary unless the list has fewer items than needed.
+4. GEOGRAPHICAL GROUPING: Group activities for each day logically by geographical area (e.g., "Day 1: South Area", "Day 2: Central Area") to minimize travel time between spots.
+5. TIME DURATIONS: Output time windows (e.g., "09:00 AM - 11:00 AM") rather than just start times. Do not leave huge empty gaps between activities.
+6. Each day must include a chronological list of 3 activities (attractions/sightseeing) and 2 meals (Lunch and Dinner).
+7. For every activity and meal, include a short 50-word description, the exact name, and the correct "lat" and "lng" coordinates exactly as provided in the list.
 
 Return a JSON object conforming exactly to this structure:
 {
@@ -47,37 +49,41 @@ Return a JSON object conforming exactly to this structure:
   "dailyItinerary": [
     {
       "day": 1,
+      "area": "e.g., South ${destination}",
       "totalSpent": 1200,
       "activities": [
         {
           "name": "Exact Name of the Place from the list",
-          "time": "09:00 AM",
+          "time": "09:00 AM - 11:00 AM",
           "rating": "4.8",
           "city": "${destination}",
           "expense": 250,
           "isMeal": false,
           "lat": 21.1272,
-          "lng": 79.0682
+          "lng": 79.0682,
+          "description": "Short AI-generated summary describing the place..."
         },
         {
           "name": "Exact Name of the Place from the list",
-          "time": "11:30 AM",
+          "time": "11:15 AM - 01:00 PM",
           "rating": "4.6",
           "city": "${destination}",
           "expense": 0,
           "isMeal": false,
           "lat": 21.1478,
-          "lng": 79.0435
+          "lng": 79.0435,
+          "description": "Short AI-generated summary describing the place..."
         },
         {
           "name": "Lunch: Exact Restaurant/Cafe Name from the list",
-          "time": "01:00 PM",
+          "time": "01:00 PM - 02:00 PM",
           "rating": "4.5",
           "city": "${destination}",
           "expense": 150,
           "isMeal": true,
           "lat": 21.1398,
-          "lng": 79.0624
+          "lng": 79.0624,
+          "description": "Short AI-generated summary describing the place..."
         }
       ]
     }
@@ -167,70 +173,92 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
     isMeal: true
   }
 
+  // Maintain sets for uniqueness
+  const usedAttractions = new Set<string>()
+  const usedMeals = new Set<string>()
+
+  const getUniqueItem = (list: any[], usedSet: Set<string>, defaultItem: any) => {
+    let available = list.filter(item => !usedSet.has(item.name))
+    if (available.length === 0) {
+      // If we run out, reset or just return default
+      if (list.length > 0) available = list // Fallback to repeating if list is extremely small
+      else return defaultItem
+    }
+    const selected = available[0]
+    usedSet.add(selected.name)
+    return selected
+  }
+
   const dailyItinerary = Array.from({ length: days }).map((_, idx) => {
     const spentDay = Math.round(costPerDay * 0.7)
     
-    // Pick from attractions/meals or fallback to custom defaults
-    const dayAttraction1 = attractions[idx % attractions.length] || defaultAttraction
-    const dayAttraction2 = attractions[(idx + 1) % attractions.length] || defaultAttraction
-    const dayAttraction3 = attractions[(idx + 2) % attractions.length] || defaultAttraction
+    // Pick unique attractions/meals
+    const dayAttraction1 = getUniqueItem(attractions, usedAttractions, defaultAttraction)
+    const dayAttraction2 = getUniqueItem(attractions, usedAttractions, defaultAttraction)
+    const dayAttraction3 = getUniqueItem(attractions, usedAttractions, defaultAttraction)
 
-    const dayMeal1 = meals[idx % meals.length] || defaultMeal
-    const dayMeal2 = meals[(idx + 1) % meals.length] || defaultMeal
+    const dayMeal1 = getUniqueItem(meals, usedMeals, defaultMeal)
+    const dayMeal2 = getUniqueItem(meals, usedMeals, defaultMeal)
 
     return {
       day: idx + 1,
+      area: `Area ${idx + 1} - ${destination}`,
       totalSpent: spentDay,
       activities: [
         {
           name: dayAttraction1.name,
-          time: '09:00 AM',
+          time: '09:00 AM - 11:00 AM',
           rating: dayAttraction1.rating.toFixed(1),
           city: destination,
           expense: Math.round(spentDay * 0.3),
           isMeal: false,
           lat: dayAttraction1.lat,
-          lng: dayAttraction1.lng
+          lng: dayAttraction1.lng,
+          description: `Enjoy the morning exploring ${dayAttraction1.name}, one of the best rated spots in ${destination}.`
         },
         {
           name: dayAttraction2.name,
-          time: '11:30 AM',
+          time: '11:15 AM - 01:00 PM',
           rating: dayAttraction2.rating.toFixed(1),
           city: destination,
           expense: 0,
           isMeal: false,
           lat: dayAttraction2.lat,
-          lng: dayAttraction2.lng
+          lng: dayAttraction2.lng,
+          description: `Continue your adventure at ${dayAttraction2.name} which features excellent local history and views.`
         },
         {
           name: `Lunch: ${dayMeal1.name}`,
-          time: '01:00 PM',
+          time: '01:00 PM - 02:00 PM',
           rating: dayMeal1.rating.toFixed(1),
           city: destination,
           expense: Math.round(spentDay * 0.2),
           isMeal: true,
           lat: dayMeal1.lat,
-          lng: dayMeal1.lng
+          lng: dayMeal1.lng,
+          description: `Take a break for lunch at ${dayMeal1.name}, famous for great local flavors.`
         },
         {
           name: dayAttraction3.name,
-          time: '03:30 PM',
+          time: '02:30 PM - 04:30 PM',
           rating: dayAttraction3.rating.toFixed(1),
           city: destination,
           expense: Math.round(spentDay * 0.25),
           isMeal: false,
           lat: dayAttraction3.lat,
-          lng: dayAttraction3.lng
+          lng: dayAttraction3.lng,
+          description: `Spend your afternoon discovering ${dayAttraction3.name}.`
         },
         {
           name: `Dinner: ${dayMeal2.name}`,
-          time: '07:30 PM',
+          time: '07:30 PM - 09:00 PM',
           rating: dayMeal2.rating.toFixed(1),
           city: destination,
           expense: Math.round(spentDay * 0.25),
           isMeal: true,
           lat: dayMeal2.lat,
-          lng: dayMeal2.lng
+          lng: dayMeal2.lng,
+          description: `Wrap up your day with a fantastic dinner experience at ${dayMeal2.name}.`
         }
       ]
     }
@@ -264,4 +292,3 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
 
   return { success: true, itinerary: generatedItinerary, source: 'Traveloop Offline Grounding Engine' }
 }
-

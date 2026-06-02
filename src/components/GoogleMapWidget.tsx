@@ -3,7 +3,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-interface Activity {
+// Shared Neumorphic tokens
+const NEU = {
+  raised:  '8px 8px 18px rgba(163,177,198,.18), -8px -8px 18px rgba(255,255,255,.9)',
+  pressed: 'inset 4px 4px 8px rgba(163,177,198,.2), inset -4px -4px 8px rgba(255,255,255,.9)',
+}
+
+export interface Activity {
   name: string
   lat?: number
   lng?: number
@@ -13,31 +19,41 @@ interface Activity {
 }
 
 interface Props {
-  activities: Activity[]
+  activities: Activity[] // Global list of activities (all days)
   apiKey?: string
+  mapMode?: 'clean' | 'day' | 'single' | 'nearby'
+  focusedActivities?: Activity[] // Passed in when mode is day, single, or nearby
 }
 
 export function GoogleMapWidget({
   activities,
-  apiKey
+  apiKey,
+  mapMode = 'clean',
+  focusedActivities = []
 }: Props) {
 
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
+  const markersRef = useRef<any[]>([])
+  const polylineRef = useRef<any>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [apiError, setApiError] = useState(false)
 
-  // Filter valid points
-  const points = useMemo(
+  // Filter valid global points (just to determine if we have data)
+  const allPoints = useMemo(
     () => activities.filter(
-      (act) =>
-        act.lat !== undefined &&
-        act.lng !== undefined &&
-        act.lat !== 0 &&
-        act.lng !== 0
+      (act) => act.lat !== undefined && act.lng !== undefined && act.lat !== 0 && act.lng !== 0
     ) as (Activity & { lat: number; lng: number })[],
     [activities]
   )
+
+  // Filter valid points to render based on the mode
+  const renderPoints = useMemo(() => {
+    if (mapMode === 'clean') return []
+    return focusedActivities.filter(
+      (act) => act.lat !== undefined && act.lng !== undefined && act.lat !== 0 && act.lng !== 0
+    ) as (Activity & { lat: number; lng: number })[]
+  }, [mapMode, focusedActivities])
 
   // LOAD GOOGLE MAPS SCRIPT
   useEffect(() => {
@@ -84,11 +100,9 @@ export function GoogleMapWidget({
     }
   }, [apiKey])
 
-  // INITIALIZE MAP
+  // INITIALIZE MAP & UPDATE MARKERS
   useEffect(() => {
-    if (!mapLoaded || !mapRef.current || points.length === 0 || mapInstanceRef.current) {
-      return
-    }
+    if (!mapLoaded || !mapRef.current) return
 
     try {
       const google = (window as any).google
@@ -97,207 +111,120 @@ export function GoogleMapWidget({
         return
       }
 
-      // Calculate center point
-      const centerLat = points.reduce((sum, p) => sum + p.lat, 0) / points.length
-      const centerLng = points.reduce((sum, p) => sum + p.lng, 0) / points.length
+      // 1. Create Map Instance if it doesn't exist
+      if (!mapInstanceRef.current) {
+        const centerLat = allPoints.length > 0 ? allPoints.reduce((sum, p) => sum + p.lat, 0) / allPoints.length : 20
+        const centerLng = allPoints.length > 0 ? allPoints.reduce((sum, p) => sum + p.lng, 0) / allPoints.length : 0
 
-      // Create map with LIGHT THEME
-      const map = new google.maps.Map(mapRef.current, {
-        center: { lat: centerLat, lng: centerLng },
-        zoom: 13,
-        disableDefaultUI: false,
-        zoomControl: true,
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true,
-        styles: [
-          // Light, clean map style
-          {
-            featureType: 'all',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#334155' }]
-          },
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          },
-          {
-            featureType: 'road',
-            elementType: 'geometry',
-            stylers: [{ color: '#f1f5f9' }, { weight: 1.5 }]
-          },
-          {
-            featureType: 'road',
-            elementType: 'labels.text',
-            stylers: [{ color: '#64748b' }]
-          },
-          {
-            featureType: 'water',
-            elementType: 'geometry',
-            stylers: [{ color: '#dbeafe' }]
-          },
-          {
-            featureType: 'landscape',
-            elementType: 'geometry',
-            stylers: [{ color: '#f8fafc' }]
-          }
-        ]
-      })
+        const map = new google.maps.Map(mapRef.current, {
+          center: { lat: centerLat, lng: centerLng },
+          zoom: 13,
+          disableDefaultUI: false,
+          zoomControl: true,
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+          styles: [
+            { featureType: 'all', elementType: 'labels.text.fill', stylers: [{ color: '#334155' }] },
+            { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f1f5f9' }, { weight: 1.5 }] },
+            { featureType: 'road', elementType: 'labels.text', stylers: [{ color: '#64748b' }] },
+            { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#dbeafe' }] },
+            { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f8fafc' }] }
+          ]
+        })
+        mapInstanceRef.current = map
+      }
 
-      mapInstanceRef.current = map
+      const map = mapInstanceRef.current
 
+      // 2. Clear previous markers and polyline
+      markersRef.current.forEach(m => m.setMap(null))
+      markersRef.current = []
+      if (polylineRef.current) {
+        polylineRef.current.setMap(null)
+        polylineRef.current = null
+      }
+
+      // 3. If clean mode or no render points, just fit to global points (or keep centered)
+      if (renderPoints.length === 0) {
+        if (allPoints.length > 0) {
+           const bounds = new google.maps.LatLngBounds()
+           allPoints.forEach(p => bounds.extend({ lat: p.lat, lng: p.lng }))
+           map.fitBounds(bounds)
+        }
+        return
+      }
+
+      // 4. Create new markers
       const bounds = new google.maps.LatLngBounds()
       const pathCoordinates: any[] = []
 
-      // Create custom markers
-      points.forEach((point, idx) => {
+      renderPoints.forEach((point, idx) => {
         const position = { lat: point.lat, lng: point.lng }
         bounds.extend(position)
         pathCoordinates.push(position)
 
-        // Custom marker icon with number
-        const markerColor = point.isMeal ? '#f59e0b' : '#6366f1' // Amber for meals, Indigo for activities
+        let markerColor = point.isMeal ? '#F59E0B' : '#6C63FF'
+        let labelText = ''
         
+        // Use letters (A, B, C) if day mode, otherwise just a solid circle
+        if (mapMode === 'day') {
+           labelText = String.fromCharCode(65 + (idx % 26))
+        } else if (mapMode === 'nearby' && idx > 0) {
+           markerColor = '#94A3B8' // nearby mocked spots
+        }
+
         const marker = new google.maps.Marker({
           position,
           map,
           title: point.name,
-          label: {
-            text: (idx + 1).toString(),
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: '12px'
-          },
+          label: labelText ? { text: labelText, color: 'white', fontWeight: 'bold', fontSize: '12px', fontFamily: 'Inter, sans-serif' } : null,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             fillColor: markerColor,
             fillOpacity: 1,
             strokeColor: 'white',
-            strokeWeight: 3,
-            scale: 18
+            strokeWeight: 2,
+            scale: labelText ? 14 : 10
           },
           animation: google.maps.Animation.DROP
         })
 
-        // Enhanced info window
+        // Info window content
         const infoContent = `
-          <div style="
-            font-family: 'Inter', sans-serif;
-            padding: 12px;
-            max-width: 220px;
-          ">
-            <div style="
-              font-size: 11px;
-              font-weight: 700;
-              color: #6366f1;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 6px;
-            ">
-              ${point.time || 'Scheduled'}
-            </div>
-            <div style="
-              font-size: 14px;
-              font-weight: 700;
-              color: #0f172a;
-              line-height: 1.4;
-              margin-bottom: 8px;
-            ">
-              ${point.name}
-            </div>
-            ${point.expense ? `
-              <div style="
-                display: inline-block;
-                background: #dcfce7;
-                color: #166534;
-                padding: 4px 10px;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: 600;
-              ">
-                💰 ${point.expense > 0 ? '$' + point.expense : 'Free'}
-              </div>
-            ` : ''}
+          <div style="font-family: 'Inter', sans-serif; padding: 10px; max-width: 220px;">
+            ${point.time ? `<div style="font-size: 11px; font-weight: 800; color: #6C63FF; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">${point.time}</div>` : ''}
+            <div style="font-size: 14px; font-weight: 700; color: #1E293B; line-height: 1.4; margin-bottom: 8px;">${point.name}</div>
           </div>
         `
-
-        const infoWindow = new google.maps.InfoWindow({
-          content: infoContent,
-          maxWidth: 250
-        })
+        const infoWindow = new google.maps.InfoWindow({ content: infoContent, maxWidth: 250 })
 
         marker.addListener('click', () => {
-          // Close all other info windows
-          markers.forEach(m => m.infoWindow.close())
+          markersRef.current.forEach(m => m.infoWindow?.close())
           infoWindow.open({ anchor: marker, map })
         })
-
-        // Store reference to close later
         ;(marker as any).infoWindow = infoWindow
+        markersRef.current.push(marker)
       })
 
-      // Store markers for closing
-      const markers: any[] = []
-      points.forEach((point, idx) => {
-        const position = { lat: point.lat, lng: point.lng }
-        const markerColor = point.isMeal ? '#f59e0b' : '#6366f1'
-        
-        const marker = new google.maps.Marker({
-          position,
-          map,
-          title: point.name,
-          label: {
-            text: (idx + 1).toString(),
-            color: 'white',
-            fontWeight: 'bold',
-            fontSize: '12px'
-          },
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: markerColor,
-            fillOpacity: 1,
-            strokeColor: 'white',
-            strokeWeight: 3,
-            scale: 18
-          }
-        })
-
-        const infoWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="font-family: sans-serif; padding: 10px; max-width: 200px;">
-              <div style="font-size: 11px; color: #6366f1; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">
-                ${point.time || ''}
-              </div>
-              <div style="font-size: 14px; font-weight: 700; color: #0f172a;">
-                ${point.name}
-              </div>
-              ${point.expense ? `<div style="margin-top: 6px; font-size: 12px; color: #166534; font-weight: 600;">💰 ${point.expense > 0 ? '$' + point.expense : 'Free'}</div>` : ''}
-            </div>
-          `
-        })
-
-        marker.addListener('click', () => {
-          markers.forEach(m => m.infoWindow.close())
-          infoWindow.open({ anchor: marker, map })
-        })
-
-        ;(marker as any).infoWindow = infoWindow
-        markers.push(marker)
-      })
-
-      // Draw route line with better visibility
-      if (points.length > 1) {
-        new google.maps.Polyline({
+      // 5. Draw route line ONLY if mode is 'day'
+      if (mapMode === 'day' && renderPoints.length > 1) {
+        polylineRef.current = new google.maps.Polyline({
           path: pathCoordinates,
           geodesic: true,
-          strokeColor: '#6366f1',
+          strokeColor: '#6C63FF',
           strokeOpacity: 0.8,
-          strokeWeight: 4,
+          strokeWeight: 3,
           map
         })
+      }
 
-        // Fit bounds with padding
+      // 6. Adjust viewport
+      if (renderPoints.length === 1 && mapMode === 'single') {
+        map.setCenter({ lat: renderPoints[0].lat, lng: renderPoints[0].lng })
+        map.setZoom(16)
+      } else {
         google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
           const padding = 60
           const ne = map.getBounds().getNorthEast()
@@ -316,7 +243,6 @@ export function GoogleMapWidget({
             padding
           )
         })
-
         map.fitBounds(bounds)
       }
 
@@ -324,62 +250,66 @@ export function GoogleMapWidget({
       console.error('Error rendering Google Map:', error)
       setApiError(true)
     }
-  }, [mapLoaded, points])
+  }, [mapLoaded, renderPoints, mapMode, allPoints])
 
   // Loading state
   if (!mapLoaded && !apiError) {
     return (
-      <div className="w-full h-80 rounded-3xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-500">
-        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3" />
-        <span className="text-sm font-medium">Loading map...</span>
+      <div style={{ width: '100%', height: '100%', minHeight: 400, background: '#FFFFFF', borderRadius: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 40, height: 40, border: '4px solid rgba(108,99,255,.2)', borderTop: '4px solid #6C63FF', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: 12 }} />
+        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>Loading map...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
-  // Error or no points state
-  if (apiError || points.length === 0) {
+  // Error state
+  if (apiError) {
     return (
-      <div className="w-full h-80 rounded-3xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-500">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-3">
-          <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div style={{ width: '100%', height: '100%', minHeight: 400, background: '#FFFFFF', borderRadius: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg style={{ width: 32, height: 32, color: '#6C63FF' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>
-        <span className="text-sm font-medium">
-          {apiError ? 'Map unavailable' : 'No locations to display'}
-        </span>
-        {points.length === 0 && (
-          <span className="text-xs text-slate-400 mt-1">Add activities with coordinates to see the route</span>
-        )}
+        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>Map unavailable</span>
       </div>
     )
   }
 
   return (
-    <div className="relative w-full h-80 rounded-3xl overflow-hidden border-2 border-slate-200 shadow-lg">
-      <div ref={mapRef} className="w-full h-full" />
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 400, background: '#FFFFFF', borderRadius: 28, overflow: 'hidden' }}>
+      <div ref={mapRef} style={{ width: '100%', height: '100%', minHeight: 400 }} />
       
-      {/* Legend overlay */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl px-4 py-3 shadow-lg">
-        <div className="text-xs font-semibold text-slate-700 mb-2">Route Legend</div>
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-indigo-500 border-2 border-white shadow-sm" />
-            <span className="text-slate-600">Activity</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm" />
-            <span className="text-slate-600">Meal</span>
+      {/* Legend overlay ONLY in day mode */}
+      {mapMode === 'day' && (
+        <div style={{
+          position: 'absolute', bottom: 20, left: 20,
+          background: '#F8FAFC', borderRadius: 20, padding: '12px 16px',
+          boxShadow: NEU.raised, display: 'flex', flexDirection: 'column', gap: 8,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>Route Legend</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#6C63FF', border: '2px solid white', boxShadow: '0 2px 4px rgba(0,0,0,.1)' }} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>Activity</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#F59E0B', border: '2px solid white', boxShadow: '0 2px 4px rgba(0,0,0,.1)' }} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1E293B', fontFamily: 'Inter, sans-serif' }}>Meal</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Total points badge */}
-      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm border border-slate-200 rounded-xl px-3 py-2 shadow-lg">
-        <div className="text-xs font-semibold text-slate-700">
-          {points.length} Locations
-        </div>
+      {/* Info badge */}
+      <div style={{
+        position: 'absolute', top: 20, right: 20,
+        background: '#F8FAFC', borderRadius: 16, padding: '8px 14px',
+        boxShadow: NEU.raised, fontSize: '0.8rem', fontWeight: 700, color: '#6C63FF', fontFamily: 'Inter, sans-serif'
+      }}>
+        {mapMode === 'clean' ? 'Map View' : mapMode === 'day' ? `${renderPoints.length} Stops Today` : 'Location Selected'}
       </div>
     </div>
   )

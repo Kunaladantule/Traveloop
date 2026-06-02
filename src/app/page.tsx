@@ -9,15 +9,27 @@ import { countriesData } from '@/lib/countries'
 import { createProfile, getUserByEmail } from '@/app/actions/auth'
 
 // ─────────────────────────────────────────────────────────────
+// 3-Level Elevation Tokens
+// ─────────────────────────────────────────────────────────────
+const NEU = {
+  PAGE:    '#E8EDF4',
+  SECTION: '#EEF2F7',
+  CARD:    '#F8FAFC',
+  raised:  '8px 8px 18px rgba(163,177,198,.18), -8px -8px 18px rgba(255,255,255,.9)',
+  pressed: 'inset 4px 4px 8px rgba(163,177,198,.2), inset -4px -4px 8px rgba(255,255,255,.9)',
+  input:   'inset 3px 3px 6px rgba(163,177,198,.15), inset -3px -3px 6px rgba(255,255,255,.9)',
+}
+
+// ─────────────────────────────────────────────────────────────
 // 🎴 Neumorphic Card
 // ─────────────────────────────────────────────────────────────
 const NeuCard = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
   <div
     className={`relative ${className}`}
     style={{
-      background: '#EAEFF5',
+      background: NEU.CARD,
       borderRadius: 32,
-      boxShadow: '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)',
+      boxShadow: NEU.raised,
       border: 'none',
       padding: '2.25rem',
     }}
@@ -58,7 +70,7 @@ const InputField = ({
         style={{
           width: '100%',
           paddingLeft: 50, paddingRight: 16, paddingTop: 14, paddingBottom: 14,
-          background: '#EAEFF5',
+          background: NEU.PAGE,
           borderRadius: 14,
           border: 'none',
           outline: 'none',
@@ -66,17 +78,16 @@ const InputField = ({
           color: '#1E293B',
           fontFamily: 'Inter, sans-serif',
           boxShadow: error
-            ? 'inset 3px 3px 8px rgba(239,68,68,.2), inset -3px -3px 8px rgba(255,255,255,.85)'
-            : 'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+            ? 'inset 3px 3px 6px rgba(239,68,68,.15), inset -3px -3px 6px rgba(255,255,255,.9)'
+            : NEU.input,
           transition: 'box-shadow .25s ease',
         }}
         onFocus={e => {
           e.currentTarget.style.boxShadow =
-            'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85), 0 0 0 2px rgba(108,99,255,.25)'
+            `${NEU.input}, 0 0 0 2px rgba(108,99,255,.2)`
         }}
         onBlur={e => {
-          e.currentTarget.style.boxShadow =
-            'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)'
+          e.currentTarget.style.boxShadow = NEU.input
         }}
         {...props}
       />
@@ -124,13 +135,13 @@ const SelectField = ({
         onClick={() => setIsOpen(!isOpen)}
         style={{
           width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: '#EAEFF5', borderRadius: 14, border: 'none', outline: 'none',
-          padding: '14px 16px 14px 16px', cursor: disabled ? 'not-allowed' : 'pointer',
+          background: NEU.PAGE, borderRadius: 14, border: 'none', outline: 'none',
+          padding: '14px 16px', cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? .55 : 1, color: '#1E293B', fontSize: '0.875rem', fontWeight: 500,
           fontFamily: 'Inter, sans-serif',
           boxShadow: error
-            ? 'inset 3px 3px 8px rgba(239,68,68,.2), inset -3px -3px 8px rgba(255,255,255,.85)'
-            : 'inset 3px 3px 8px rgba(163,177,198,.35), inset -3px -3px 8px rgba(255,255,255,.85)',
+            ? 'inset 3px 3px 6px rgba(239,68,68,.15), inset -3px -3px 6px rgba(255,255,255,.9)'
+            : NEU.input,
           transition: 'box-shadow .25s ease',
         }}
       >
@@ -145,8 +156,8 @@ const SelectField = ({
       {isOpen && (
         <div style={{
           position: 'absolute', top: 'calc(100% + 10px)', left: 0, right: 0, zIndex: 50,
-          background: '#EAEFF5', borderRadius: 20, border: 'none',
-          boxShadow: '12px 12px 24px rgba(163,177,198,.35), -12px -12px 24px rgba(255,255,255,.9)',
+          background: NEU.CARD, borderRadius: 20, border: 'none',
+          boxShadow: '10px 10px 22px rgba(163,177,198,.15), -10px -10px 22px rgba(255,255,255,.95)',
           overflow: 'hidden',
         }}>
           <div style={{ padding: '10px 10px 6px' }}>
@@ -158,8 +169,8 @@ const SelectField = ({
                 placeholder={searchPlaceholder}
                 style={{
                   width: '100%', paddingLeft: 36, paddingRight: 12, paddingTop: 8, paddingBottom: 8,
-                  background: '#EAEFF5', borderRadius: 12, border: 'none', outline: 'none', fontSize: '0.8rem', color: '#1E293B',
-                  boxShadow: 'inset 2px 2px 5px rgba(163,177,198,.3), inset -2px -2px 5px rgba(255,255,255,.85)',
+                  background: NEU.PAGE, borderRadius: 12, border: 'none', outline: 'none', fontSize: '0.8rem', color: '#1E293B',
+                  boxShadow: NEU.input,
                   fontFamily: 'Inter, sans-serif',
                 }}
               />
@@ -178,7 +189,7 @@ const SelectField = ({
                     fontWeight: value === opt ? 700 : 500, fontSize: '0.85rem',
                     transition: 'background .15s ease', fontFamily: 'Inter, sans-serif',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(108,99,255,.07)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(108,99,255,.05)' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                 >
                   {opt}
@@ -296,15 +307,13 @@ export default function AuthPage() {
     flex: 1, padding: '12px 16px', borderRadius: 14, border: 'none', cursor: 'pointer',
     fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '0.875rem',
     transition: 'all .3s ease',
-    background: active ? '#EAEFF5' : 'transparent',
+    background: active ? NEU.PAGE : 'transparent',
     color: active ? '#6C63FF' : '#64748B',
-    boxShadow: active
-      ? '8px 8px 16px rgba(163,177,198,.45), -8px -8px 16px rgba(255,255,255,.85)'
-      : 'none',
+    boxShadow: active ? NEU.raised : 'none',
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#EAEFF5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: NEU.PAGE, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', padding: '1.5rem' }}>
 
       {/* Decorative blobs */}
       <div style={{ position: 'absolute', top: -80, right: -80, width: 360, height: 360, background: 'rgba(108,99,255,.06)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
@@ -329,8 +338,8 @@ export default function AuthPage() {
           {/* Toggle Tab */}
           <div style={{
             display: 'flex', padding: 6, borderRadius: 18, marginBottom: 32,
-            boxShadow: 'inset 4px 4px 8px rgba(163,177,198,.4), inset -4px -4px 8px rgba(255,255,255,.85)',
-            background: '#EAEFF5',
+            boxShadow: NEU.pressed,
+            background: NEU.PAGE,
           }}>
             <button style={tabStyle(authMode === 'login')} onClick={() => setAuthMode('login')}>Sign In</button>
             <button style={tabStyle(authMode === 'register')} onClick={() => setAuthMode('register')}>Register</button>
@@ -339,7 +348,7 @@ export default function AuthPage() {
           {/* Title */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: '#1E293B', margin: 0 }}>
-              {authMode === 'login' ? 'Welcome back! 👋' : 'Create account ✨'}
+              {authMode === 'login' ? 'Welcome back!' : 'Create account'}
             </h1>
             <p style={{ marginTop: 8, fontSize: '0.9rem', color: '#64748B', fontFamily: 'Inter, sans-serif' }}>
               {authMode === 'login' ? 'Sign in to continue your journey' : 'Start planning your dream trip'}
@@ -350,8 +359,8 @@ export default function AuthPage() {
           {errors.submit && (
             <div style={{
               display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px',
-              background: '#EAEFF5', borderRadius: 16, marginBottom: 20,
-              boxShadow: 'inset 3px 3px 8px rgba(239,68,68,.15), inset -3px -3px 8px rgba(255,255,255,.85)',
+              background: NEU.PAGE, borderRadius: 16, marginBottom: 20,
+              boxShadow: 'inset 3px 3px 6px rgba(239,68,68,.15), inset -3px -3px 6px rgba(255,255,255,.9)',
               color: '#EF4444', fontSize: '0.85rem', fontFamily: 'Inter, sans-serif'
             }}>
               <AlertCircle style={{ width: 16, height: 16, flexShrink: 0, marginTop: 2 }} />
