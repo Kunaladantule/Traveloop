@@ -16,7 +16,7 @@ export async function generateGeminiItinerary(params: {
   // 1. Fetch real-time (or high-fidelity offline) Google Places for destination
   const places = await getGooglePlacesForCity(destination)
   const placesContext = places.map((p, idx) => 
-    `${idx + 1}. Name: "${p.name}", Rating: ${p.rating}, Types: [${p.types.join(', ')}], Address: "${p.address}", Lat: ${p.lat}, Lng: ${p.lng}, isMeal: ${p.isMeal || false}`
+    `${idx + 1}. Name: "${p.name}", Rating: ${p.rating}, Types: [${p.types.join(', ')}], Address: "${p.address}", Lat: ${p.lat}, Lng: ${p.lng}, placeId: "${p.placeId || ''}", isMeal: ${p.isMeal || false}`
   ).join('\n')
 
   if (apiKey) {
@@ -57,10 +57,12 @@ Return a JSON object conforming exactly to this structure:
           "time": "09:00 AM - 11:00 AM",
           "rating": "4.8",
           "city": "${destination}",
+          "exactArea": "Extract local area from Address",
           "expense": 250,
           "isMeal": false,
           "lat": 21.1272,
           "lng": 79.0682,
+          "placeId": "exact_placeId_from_list",
           "description": "Short AI-generated summary describing the place..."
         },
         {
@@ -68,10 +70,12 @@ Return a JSON object conforming exactly to this structure:
           "time": "11:15 AM - 01:00 PM",
           "rating": "4.6",
           "city": "${destination}",
+          "exactArea": "Extract local area from Address",
           "expense": 0,
           "isMeal": false,
           "lat": 21.1478,
           "lng": 79.0435,
+          "placeId": "exact_placeId_from_list",
           "description": "Short AI-generated summary describing the place..."
         },
         {
@@ -79,10 +83,12 @@ Return a JSON object conforming exactly to this structure:
           "time": "01:00 PM - 02:00 PM",
           "rating": "4.5",
           "city": "${destination}",
+          "exactArea": "Extract local area from Address",
           "expense": 150,
           "isMeal": true,
           "lat": 21.1398,
           "lng": 79.0624,
+          "placeId": "exact_placeId_from_list",
           "description": "Short AI-generated summary describing the place..."
         }
       ]
@@ -210,10 +216,12 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
           time: '09:00 AM - 11:00 AM',
           rating: dayAttraction1.rating.toFixed(1),
           city: destination,
+          exactArea: destination,
           expense: Math.round(spentDay * 0.3),
           isMeal: false,
           lat: dayAttraction1.lat,
           lng: dayAttraction1.lng,
+          placeId: dayAttraction1.placeId,
           description: `Enjoy the morning exploring ${dayAttraction1.name}, one of the best rated spots in ${destination}.`
         },
         {
@@ -221,10 +229,12 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
           time: '11:15 AM - 01:00 PM',
           rating: dayAttraction2.rating.toFixed(1),
           city: destination,
+          exactArea: destination,
           expense: 0,
           isMeal: false,
           lat: dayAttraction2.lat,
           lng: dayAttraction2.lng,
+          placeId: dayAttraction2.placeId,
           description: `Continue your adventure at ${dayAttraction2.name} which features excellent local history and views.`
         },
         {
@@ -232,10 +242,12 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
           time: '01:00 PM - 02:00 PM',
           rating: dayMeal1.rating.toFixed(1),
           city: destination,
+          exactArea: destination,
           expense: Math.round(spentDay * 0.2),
           isMeal: true,
           lat: dayMeal1.lat,
           lng: dayMeal1.lng,
+          placeId: dayMeal1.placeId,
           description: `Take a break for lunch at ${dayMeal1.name}, famous for great local flavors.`
         },
         {
@@ -243,10 +255,12 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
           time: '02:30 PM - 04:30 PM',
           rating: dayAttraction3.rating.toFixed(1),
           city: destination,
+          exactArea: destination,
           expense: Math.round(spentDay * 0.25),
           isMeal: false,
           lat: dayAttraction3.lat,
           lng: dayAttraction3.lng,
+          placeId: dayAttraction3.placeId,
           description: `Spend your afternoon discovering ${dayAttraction3.name}.`
         },
         {
@@ -254,10 +268,12 @@ Ensure there are exactly ${days} items in "dailyItinerary". Provide realistic ex
           time: '07:30 PM - 09:00 PM',
           rating: dayMeal2.rating.toFixed(1),
           city: destination,
+          exactArea: destination,
           expense: Math.round(spentDay * 0.25),
           isMeal: true,
           lat: dayMeal2.lat,
           lng: dayMeal2.lng,
+          placeId: dayMeal2.placeId,
           description: `Wrap up your day with a fantastic dinner experience at ${dayMeal2.name}.`
         }
       ]

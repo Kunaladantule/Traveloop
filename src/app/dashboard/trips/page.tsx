@@ -13,7 +13,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip
 } from 'recharts'
 import { getUserTrips, deleteTrip, updateTripBudget } from '@/app/actions/trip'
-import { getGoogleMapsApiKey } from '@/app/actions/googlePlaces'
+import { getGoogleMapsApiKey, getPlaceDetails } from '@/app/actions/googlePlaces'
 import { GoogleMapWidget, Activity as MapActivity } from '@/components/GoogleMapWidget'
 
 // ─────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ interface Trip {
   id: string; title: string; description?: string | null
   startDate: string; endDate: string; totalBudget?: number | null
   coverImage?: string | null; stops?: TripStop[]; expenses?: TripExpense[]
-  itineraryDays?: Array<{ day: number; area?: string; totalSpent: number; activities: Array<{ name: string; time: string; rating?: string; city?: string; expense: number; isMeal?: boolean; description?: string; lat?: number; lng?: number }> }>
+  itineraryDays?: Array<{ day: number; area?: string; totalSpent: number; activities: Array<{ name: string; time: string; rating?: string; city?: string; expense: number; isMeal?: boolean; description?: string; lat?: number; lng?: number; placeId?: string; exactArea?: string }> }>
   smartRecommendations?: Array<{ name: string; desc: string; rating: string; type?: string }>
 }
 
@@ -144,6 +144,10 @@ function TripsPageInner() {
   const [mapMode, setMapMode] = useState<'clean'|'day'|'single'|'nearby'>('clean')
   const [focusedActivities, setFocusedActivities] = useState<any[]>([])
 
+  const [fetchedPlaceDetails, setFetchedPlaceDetails] = useState<any | null>(null)
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
+
   useEffect(() => {
     getGoogleMapsApiKey().then(k => setGoogleMapsKey(k)).catch(console.error)
   }, [])
@@ -238,8 +242,16 @@ function TripsPageInner() {
     setFocusedActivities(dayActivities)
     setSelectedActivity(null)
   }
-  const handleActivitySelect = (act: any) => {
+  const handleActivitySelect = async (act: any) => {
     setSelectedActivity(act)
+    setFetchedPlaceDetails(null)
+    setActivePhotoIndex(0)
+    if (act.placeId) {
+      setIsFetchingDetails(true)
+      const details = await getPlaceDetails(act.placeId)
+      setFetchedPlaceDetails(details)
+      setIsFetchingDetails(false)
+    }
   }
 
   if (loading) return (
@@ -301,50 +313,68 @@ function TripsPageInner() {
               </div>
               
               <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 24px 40px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <div style={{ width: '100%', height: 200, borderRadius: 24, background: NEU.CARD, boxShadow: NEU.pressed, overflow: 'hidden', position: 'relative' }}>
-                  <img src={activeTrip.coverImage || ''} alt={selectedActivity.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(248,250,252,.85)', backdropFilter: 'blur(8px)', padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#6C63FF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {selectedActivity.isMeal ? 'Dining' : 'Attraction'}
+                {isFetchingDetails ? (
+                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 250, background: NEU.CARD, borderRadius: 24, boxShadow: NEU.pressed }}>
+                      <Compass size={24} color="#6C63FF" style={{ animation: 'spin 1.5s linear infinite' }} />
+                   </div>
+                ) : (
+                  <div style={{ width: '100%', height: 250, borderRadius: 24, background: NEU.CARD, boxShadow: NEU.pressed, overflow: 'hidden', position: 'relative' }}>
+                    {fetchedPlaceDetails?.photos?.length > 0 ? (
+                      <div style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', height: '100%', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                         {fetchedPlaceDetails.photos.map((photo: any, i: number) => (
+                           <img key={i} src={photo.photoUrl} alt={selectedActivity.name} style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'start' }} />
+                         ))}
+                      </div>
+                    ) : (
+                      <img src={activeTrip.coverImage || ''} alt={selectedActivity.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(248,250,252,.9)', backdropFilter: 'blur(8px)', padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 800, color: '#6C63FF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {selectedActivity.isMeal ? 'Dining' : 'Attraction'}
+                    </div>
+                    {fetchedPlaceDetails?.photos?.length > 0 && (
+                      <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700, color: 'white', letterSpacing: '0.05em' }}>
+                        Swipe photos ➔
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 <div>
-                  <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.6rem', color: '#1E293B', margin: '0 0 12px', lineHeight: 1.2 }}>{selectedActivity.name}</h2>
+                  <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: '1.6rem', color: '#1E293B', margin: '0 0 8px', lineHeight: 1.2 }}>{fetchedPlaceDetails?.name || selectedActivity.name}</h2>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised }}>
-                      <Star size={16} color="#F59E0B" style={{ fill: '#F59E0B' }} />
-                      <div><div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Rating</div><div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 700 }}>{selectedActivity.rating || '4.5'}</div></div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised }}>
-                      <MapPin size={16} color="#3B82F6" />
-                      <div><div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Location</div><div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 100 }}>{selectedActivity.city || dest}</div></div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised }}>
-                      <Clock size={16} color="#22C55E" />
-                      <div><div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Time</div><div style={{ fontSize: '0.85rem', color: '#1E293B', fontWeight: 700 }}>{selectedActivity.time?.split('-')[0]?.trim() || 'Schedule'}</div></div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised }}>
-                      <DollarSign size={16} color="#EF4444" />
-                      <div><div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Expense</div><div style={{ fontSize: '0.9rem', color: '#1E293B', fontWeight: 700 }}>{selectedActivity.expense > 0 ? `${currencySymbol}${selectedActivity.expense}` : 'Free'}</div></div>
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                    <MapPin size={14} color="#64748B" />
+                    <span style={{ fontSize: '0.9rem', color: '#64748B', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                      {selectedActivity.exactArea ? `${selectedActivity.exactArea}, ${selectedActivity.city || dest}` : (fetchedPlaceDetails?.formatted_address || selectedActivity.city || dest)}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>
+                    <Star size={16} color="#F59E0B" style={{ fill: '#F59E0B' }} />
+                    <span style={{ fontSize: '0.95rem', color: '#1E293B', fontWeight: 700 }}>{fetchedPlaceDetails?.rating || selectedActivity.rating || '4.5'}</span>
+                    <span style={{ fontSize: '0.85rem', color: '#94A3B8', marginLeft: 4 }}>({fetchedPlaceDetails?.reviews?.length || 124} reviews)</span>
                   </div>
 
                   <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#1E293B', marginBottom: 8 }}>Description</h3>
                   <p style={{ fontSize: '0.95rem', color: '#64748B', lineHeight: 1.6, margin: '0 0 24px', fontFamily: 'Inter, sans-serif' }}>
-                    {selectedActivity.description || `A highly recommended spot to visit in ${selectedActivity.city || dest}.`}
+                    {selectedActivity.description || `A highly recommended spot to visit in ${selectedActivity.exactArea || selectedActivity.city || dest}. Experience the unique atmosphere and create unforgettable memories.`}
                   </p>
                   
-                  <h3 style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#1E293B', marginBottom: 12 }}>Expected Weather</h3>
-                  <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
-                      <Sun size={20} color="#F59E0B" style={{ margin: '0 auto 6px' }} /><div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>Day 1</div><div style={{ fontSize: '0.8rem', color: '#64748B' }}>32°C</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+                    <div style={{ background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised, textAlign: 'center' }}>
+                      <Clock size={18} color="#3B82F6" style={{ margin: '0 auto 6px' }} />
+                      <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Best Time</div>
+                      <div style={{ fontSize: '0.85rem', color: '#1E293B', fontWeight: 700 }}>Morning</div>
                     </div>
-                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
-                      <CloudSun size={20} color="#3B82F6" style={{ margin: '0 auto 6px' }} /><div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>Day 2</div><div style={{ fontSize: '0.8rem', color: '#64748B' }}>30°C</div>
+                    <div style={{ background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised, textAlign: 'center' }}>
+                      <Calendar size={18} color="#22C55E" style={{ margin: '0 auto 6px' }} />
+                      <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Duration</div>
+                      <div style={{ fontSize: '0.85rem', color: '#1E293B', fontWeight: 700 }}>1-2 hrs</div>
                     </div>
-                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
-                      <CloudRain size={20} color="#8B5CF6" style={{ margin: '0 auto 6px' }} /><div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>Day 3</div><div style={{ fontSize: '0.8rem', color: '#64748B' }}>28°C</div>
+                    <div style={{ background: NEU.CARD, padding: '12px', borderRadius: 16, boxShadow: NEU.raised, textAlign: 'center' }}>
+                      <DollarSign size={18} color="#EF4444" style={{ margin: '0 auto 6px' }} />
+                      <div style={{ fontSize: 10, color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>Entry Fee</div>
+                      <div style={{ fontSize: '0.85rem', color: '#1E293B', fontWeight: 700 }}>{selectedActivity.expense > 0 ? `${currencySymbol}${selectedActivity.expense}` : 'Free'}</div>
                     </div>
                   </div>
 
@@ -354,7 +384,7 @@ function TripsPageInner() {
                       <Map size={18} /> Show on Map
                     </button>
                     <div style={{ display: 'flex', gap: 12 }}>
-                      <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedActivity.lat},${selectedActivity.lng}`)} style={{ flex: 1, padding: '14px', borderRadius: 16, background: '#F8FAFC', border: 'none', boxShadow: NEU.raised, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+                      <button onClick={() => window.open(fetchedPlaceDetails?.url || `https://www.google.com/maps/dir/?api=1&destination=${selectedActivity.lat},${selectedActivity.lng}`)} style={{ flex: 1, padding: '14px', borderRadius: 16, background: '#F8FAFC', border: 'none', boxShadow: NEU.raised, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
                         <Navigation size={18} /> Directions
                       </button>
                       <button onClick={() => {
@@ -435,6 +465,28 @@ function TripsPageInner() {
             
             {/* Left Column: Itinerary Days */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              
+              {/* Destination Weather Forecast */}
+              <NeuCard style={{ padding: '1.5rem 2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div>
+                      <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: '#1E293B', margin: 0 }}>Trip Weather Forecast</h3>
+                      <p style={{ fontSize: '0.85rem', color: '#94A3B8', fontFamily: 'Inter, sans-serif', marginTop: 4 }}>Upcoming conditions for {dest}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '16px 12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
+                      <Sun size={24} color="#F59E0B" style={{ margin: '0 auto 8px' }} /><div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B' }}>Today</div><div style={{ fontSize: '0.85rem', color: '#64748B' }}>32°C</div>
+                    </div>
+                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '16px 12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
+                      <CloudSun size={24} color="#3B82F6" style={{ margin: '0 auto 8px' }} /><div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B' }}>Tomorrow</div><div style={{ fontSize: '0.85rem', color: '#64748B' }}>30°C</div>
+                    </div>
+                    <div style={{ flex: 1, background: NEU.PAGE, borderRadius: 16, padding: '16px 12px', boxShadow: NEU.pressed, textAlign: 'center' }}>
+                      <CloudRain size={24} color="#8B5CF6" style={{ margin: '0 auto 8px' }} /><div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1E293B' }}>Day 3</div><div style={{ fontSize: '0.85rem', color: '#64748B' }}>28°C</div>
+                    </div>
+                  </div>
+              </NeuCard>
+
               {activeTrip.itineraryDays?.length ? activeTrip.itineraryDays.map(day => (
                 <NeuCard key={day.day}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottom: '1px solid rgba(163,177,198,.15)' }}>

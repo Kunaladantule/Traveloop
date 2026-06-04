@@ -18,6 +18,7 @@ export interface GooglePlaceInfo {
   photoUrl?: string
   priceLevel?: number
   openNow?: boolean
+  placeId?: string
 }
 
 export async function getGooglePlaceSuggestions(
@@ -140,6 +141,7 @@ export async function getGooglePlacesForCity(
               r.geometry?.location?.lng || 0,
 
             types: r.types || [],
+            placeId: r.place_id,
 
             photoUrl:
               r.photos?.[0]?.photo_reference
@@ -200,4 +202,33 @@ export async function getGoogleMapsApiKey(): Promise<string> {
     process.env
       .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
   )
+}
+
+export async function getPlaceDetails(placeId: string): Promise<any> {
+  // SERVER KEY ONLY
+  const apiKey = process.env.GOOGLE_SERVER_API_KEY
+  if (!apiKey) {
+    console.warn('Google Server API key missing.')
+    return null
+  }
+
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,formatted_phone_number,photos,reviews,opening_hours,geometry,url,formatted_address&key=${apiKey}`
+    const res = await fetch(url, { cache: 'no-store' })
+    const data = await res.json()
+    
+    if (data.status === 'OK' && data.result) {
+      if (data.result.photos) {
+        data.result.photos = data.result.photos.map((p: any) => ({
+          ...p,
+          photoUrl: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${p.photo_reference}&key=${apiKey}`
+        }))
+      }
+      return data.result
+    }
+    console.error('Place Details API Error:', data)
+  } catch (error) {
+    console.error('Error fetching Place Details:', error)
+  }
+  return null
 }
